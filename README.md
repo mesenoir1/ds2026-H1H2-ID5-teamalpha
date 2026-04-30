@@ -4,7 +4,7 @@
 H1 + H2: XAI-Guided Training for Knee Osteoarthritis Grading
 
 ## Group Members
-Jan Gindorf
+Jan Gindorf (7037280)
 
 Sirisha Sandadi (7072365)
 

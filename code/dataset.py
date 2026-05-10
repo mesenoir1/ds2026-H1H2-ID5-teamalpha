@@ -105,7 +105,6 @@ def main() -> None:
 
 
     # Stratified Train/Test Split
-    # debug statement print("\n--- Stratified Split 80-20 ---")
     X_train, X_test, y_train, y_test = train_test_split(
         image_paths, 
         labels, 
@@ -113,11 +112,10 @@ def main() -> None:
         stratify=labels, 
         random_state=42
     )
-    print(f"Trainingsdata: {len(X_train)} imgs")
-    print(f"Testdata: {len(X_test)} imgs")
+    print(f"\nSplit (80-20): {len(X_train)} imgs Trainingsdata, {len(X_test)} imgs Testdata")
     # Check Distribution
     test_counts = Counter(y_test)
-    print("\n Check Class Distribution:")
+    print("Check Class Distribution for Testdata:")
     for label in sorted(test_counts):
         print(f"KL grade {label}: {test_counts[label]}") # Just a quick check if we got a adequate splitting distribution
 

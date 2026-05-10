@@ -10,7 +10,7 @@ Sirisha Sandadi (7072365)
 
 Elina Abdrashitova (7069012)
 
-Zumrud Hasanova
+Zumrud Hasanova (7071133)
 
 Vladyslava Semenova (7062334)
 

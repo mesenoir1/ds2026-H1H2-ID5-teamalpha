@@ -1,6 +1,7 @@
 data/kneeosteoarthritis
 data/.cache
 data/data.zip
+report/figures/*
 models/*
 runlogs/*
 __pycache__/

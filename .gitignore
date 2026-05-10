@@ -1,4 +1,6 @@
-data/*
+data/kneeosteoarthritis
+data/.cache
+data/data.zip
 models/*
 runlogs/*
 __pycache__/

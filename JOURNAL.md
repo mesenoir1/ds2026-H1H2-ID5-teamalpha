@@ -24,3 +24,8 @@ Next steps: We will use stratified splitting. Considering imbalance: metrics suc
 We tested the current scrips locally and fixed a few minor issues. 
 We added a data splitter for training. As mentioned previously the dataset is high imbalanced, so we added stratified splitting.
 To keep track of the behavior we added a few print statements showing distribution after splitting.
+
+### Decision: Checked GPU access to the cluster
+
+We tested GPU availability.
+

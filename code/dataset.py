@@ -4,7 +4,6 @@ import random
 
 import matplotlib.pyplot as plt
 from PIL import Image
-from sklearn.model_selection import train_test_split # added for splitter (using stratified split)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data" / "kneeosteoarthritis"
@@ -102,23 +101,6 @@ def main() -> None:
     print("\nClass distribution:")
     for label in sorted(counts):
         print(f"KL grade {label}: {counts[label]}")
-
-
-    # Stratified Train/Test Split
-    X_train, X_test, y_train, y_test = train_test_split(
-        image_paths, 
-        labels, 
-        test_size=0.2, 
-        stratify=labels, 
-        random_state=42
-    )
-    print(f"\nSplit (80-20): {len(X_train)} imgs Trainingsdata, {len(X_test)} imgs Testdata")
-    # Check Distribution
-    test_counts = Counter(y_test)
-    print("Check Class Distribution for Testdata:")
-    for label in sorted(test_counts):
-        print(f"KL grade {label}: {test_counts[label]}") # Just a quick check if we got a adequate splitting distribution
-
 
     plot_class_distribution(counts)
     plot_sample_images(image_paths)

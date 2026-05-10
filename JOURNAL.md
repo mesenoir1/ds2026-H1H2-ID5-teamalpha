@@ -16,3 +16,11 @@ The initial audit showed that sampled images are consistently 224×224 pixels. T
 
 Next steps: We will use stratified splitting. Considering imbalance: metrics such as macro-F1, balanced accuracy, and per-class recall instead of just accuracy.
 
+
+## KW19 - 10 May 2026
+
+### Decision: Local Tests, Bug-Fixes and Data Splitter
+
+We tested the current scrips locally and fixed a few minor issues. 
+We added a data splitter for training. As mentioned previously the dataset is high imbalanced, so we added stratified splitting.
+To keep track of the behavior we added a few print statements showing distribution after splitting.

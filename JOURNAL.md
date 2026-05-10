@@ -29,3 +29,7 @@ To keep track of the behavior we added a few print statements showing distributi
 
 We tested GPU availability.
 
+### Decision: Refactoring Data Split Logic, extending Split and add csv File
+
+Moved the data splitting logic from dataset.py into a separate split.py to ensure cluster compatibility.
+Adjusted the split to Train (70%), Validation (15%), and Test (15%). The split is saved as dataset_split.csv in Figures Directory for reproducibility.

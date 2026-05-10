@@ -16,3 +16,6 @@ The initial audit showed that sampled images are consistently 224×224 pixels. T
 
 Next steps: We will use stratified splitting. Considering imbalance: metrics such as macro-F1, balanced accuracy, and per-class recall instead of just accuracy.
 
+### Decision: Checked GPU access to the cluster
+
+We tested GPU availability.

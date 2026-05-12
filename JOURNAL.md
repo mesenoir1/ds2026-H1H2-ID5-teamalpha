@@ -33,3 +33,19 @@ We tested GPU availability.
 
 Moved the data splitting logic from dataset.py into a separate split.py to ensure cluster compatibility.
 Adjusted the split to Train (70%), Validation (15%), and Test (15%). The split is saved as dataset_split.csv in Figures Directory for reproducibility.
+
+## KW20 - 11 May 2026
+
+### Decision: Baseline model selection
+
+We decided to train 4 baseline model variants for KL-grade classification with following work division:
+- Sirisha and Vladyslava:
+1. ResNet with standard cross-entropy loss
+2. ResNet with weighted cross-entropy loss
+- Jan, Zumrud, Elina:
+3. DenseNet with standard cross-entropy loss
+4. DenseNet with weighted cross-entropy loss.
+
+This decision was based on the reference paper by Choi et al. (2025), which compared DenseNet201, ResNet101, and EfficientNetV2 for knee osteoarthritis KL-grade classification. The paper reported that DenseNet201 achieved the strongest overall performance, while ResNet101 served as a relevant comparison architecture. However, unlike the balanced dataset used in the reference paper, our SilpaCS/kneeosteoarthritis dataset has an imbalanced KL-grade distribution. Therefore, we decided to evaluate each architecture both with and without weighted cross-entropy loss to test whether class weighting improves minority-class performance.
+
+After training, we will evaluate the four baseline variants.

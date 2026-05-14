@@ -2,89 +2,76 @@ import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.utils.data
-import pandas as pd
-from PIL import Image
 
 from torchvision import datasets, transforms, models
 from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+import pandas as pd
+from PIL import Image
+from torch.utils.data import Dataset, DataLoader
 
+# BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = "/home/dsbwl26_team005/ds2026-H1H2-ID5-teamalpha_resNet/data/splits"
 
-DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "splits")
+TRAIN_CSV = os.path.join(DATA_DIR, "train.csv")
+VAL_CSV = os.path.join(DATA_DIR, "val.csv")
+TEST_CSV = os.path.join(DATA_DIR, "test.csv")
+ 
 NUM_CLASSES = 5
 BATCH_SIZE = 8
 EPOCHS = 50
 LR = 1e-4
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
 BEST_MODEL_PATH = "best_resnet101_kl_grade.pth"
 
-# transform = transforms.Compose([
-#     transforms.Resize((224, 224)),
-#     transforms.Grayscale(num_output_channels=3),  # ResNet expects 3 channels
-#     transforms.ToTensor(),
-#     transforms.Normalize(
-#         mean=[0.485, 0.456, 0.406],
-#         std=[0.229, 0.224, 0.225]
-#     )
-# ])
+transform = transforms.Compose([
+    transforms.Grayscale(num_output_channels=3),  # ResNet expects 3 channels
+    transforms.ToTensor()
+])
 
-class CSVDataset(torch.utils.data.Dataset):
+class KneeXrayCSVDataset(Dataset):
     def __init__(self, csv_file, transform=None):
         self.data = pd.read_csv(csv_file)
         self.transform = transform
+
+        required_columns = {"image_path", "label"}
+        if not required_columns.issubset(self.data.columns):
+            raise ValueError(
+                f"CSV must contain columns: {required_columns}. "
+                f"Found: {set(self.data.columns)}"
+            )
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
-        img_path = self.data.iloc[idx, 0]
-        label = self.data.iloc[idx, 1]
+        image_path = self.data.iloc[idx]["image_path"]
+        label = int(self.data.iloc[idx]["label"])
 
-        img_path = os.path.join(DATA_DIR, img_path)
+        if not os.path.exists(image_path):
+            raise FileNotFoundError(f"Image not found: {image_path}")
+
+        image = Image.open(image_path).convert("L")
 
         if self.transform:
             image = self.transform(image)
 
-        return image, torch.tensor(label, dtype=torch.long)
+        return image, label
 
-transform = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.Grayscale(num_output_channels=3),
-    transforms.ToTensor(),
-    transforms.Normalize(
-        mean=[0.485, 0.456, 0.406],
-        std=[0.229, 0.224, 0.225]
-    )
-])
-
-train_dataset = CSVDataset(
-    csv_file=os.path.join(DATA_DIR, "train.csv"),
+train_dataset = KneeXrayCSVDataset(
+    csv_file=TRAIN_CSV,
     transform=transform
 )
 
-val_dataset = CSVDataset(
-    csv_file=os.path.join(DATA_DIR, "val.csv"),
+val_dataset = KneeXrayCSVDataset(
+    csv_file=VAL_CSV,
     transform=transform
 )
 
-test_dataset = CSVDataset(
-    csv_file=os.path.join(DATA_DIR, "test.csv"),
+test_dataset = KneeXrayCSVDataset(
+    csv_file=TEST_CSV,
     transform=transform
 )
-
-#train_dataset = datasets.ImageFolder(
-#    root=os.path.join(DATA_DIR, "train")
-#)
-
-#val_dataset = datasets.ImageFolder(
-#    root=os.path.join(DATA_DIR, "val")
-#)
-
-#test_dataset = datasets.ImageFolder(
-#    root=os.path.join(DATA_DIR, "test")
-#)
 
 train_loader = DataLoader(
     train_dataset,

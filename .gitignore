@@ -1,4 +1,6 @@
 data/kneeosteoarthritis
+outputs/resnet101_ce/best_model.pt
+outputs/resnet101_weighted_ce/best_model.pt
 data/.cache
 data/data.zip
 report/figures/*

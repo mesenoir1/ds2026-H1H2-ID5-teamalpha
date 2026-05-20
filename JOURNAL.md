@@ -87,10 +87,10 @@ For both DenseNet variants, the model checkpoint was selected using the best val
 
 ### Decision: Baseline model selection after evaluation
 
-| Model | Accuracy | Macro Precision | Macro Recall | Macro-F1 |
+| Model | Accuracy | Macro Precision | Macro Recall | Macro-F1 | Weighted-F1 |
 |---|---:|---:|---:|---:|---:|
-| DenseNet201 + CE | 0.6877 | 0.6795 | 0.6994 | 0.6858 |
-| DenseNet201 + weighted CE | 0.6610 | 0.6907 | 0.6863 | 0.6870 | 
+| DenseNet201 + CE | 0.6877 | 0.6795 | 0.6994 | 0.6858 | 0.6746 |
+| DenseNet201 + weighted CE | 0.6610 | 0.6907 | 0.6863 | 0.6870 | 0.6619 |
 | ResNet + CE | 0.6723 | 0.6775 | 0.6698 | 0.6716 | - |
 | ResNet + weighted CE | 0.6489 | 0.6908 | 0.6554 | 0.6696 | - |
 

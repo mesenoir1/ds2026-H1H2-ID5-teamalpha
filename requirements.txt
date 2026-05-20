@@ -9,3 +9,4 @@ matplotlib
 Pillow
 tqdm
 opencv-python
+seaborn

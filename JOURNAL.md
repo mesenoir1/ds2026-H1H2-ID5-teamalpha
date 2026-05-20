@@ -49,3 +49,51 @@ We decided to train 4 baseline model variants for KL-grade classification with f
 This decision was based on the reference paper by Choi et al. (2025), which compared DenseNet201, ResNet101, and EfficientNetV2 for knee osteoarthritis KL-grade classification. The paper reported that DenseNet201 achieved the strongest overall performance, while ResNet101 served as a relevant comparison architecture. However, unlike the balanced dataset used in the reference paper, our SilpaCS/kneeosteoarthritis dataset has an imbalanced KL-grade distribution. Therefore, we decided to evaluate each architecture both with and without weighted cross-entropy loss to test whether class weighting improves minority-class performance.
 
 After training, we will evaluate the four baseline variants.
+
+
+## KW21 - 18 May 2026
+
+### Decision: Baseline training
+
+We trained 4 CNN baseline variants for KL-grade classification:
+1. ResNet with standard cross-entropy loss
+2. ResNet with weighted cross-entropy loss
+3. DenseNet201 with standard cross-entropy loss
+4. DenseNet201 with weighted cross-entropy loss
+
+The image preprocessing pipeline converted grayscale knee X-ray images into 3-channel tensors because ImageNet-pretrained CNN backbones expect RGB-style input. Images were resized to 224×224 pixels. For training, we used random horizontal flipping as a simple data augmentation step. For validation and testing, we used deterministic preprocessing without augmentation. Images were normalized using ImageNet mean and standard deviation values because the CNN backbones were initialized with ImageNet-pretrained weights.
+
+We used macro-F1, macro precision, macro recall, and accuracy for evaluation.
+
+## KW21 - 19 May 2026
+
+
+### Decision: DenseNet201 with weighted cross-entropy loss as a baseline model
+
+For the DenseNet branch, each image is loaded as grayscale and converted to 3 channels before being passed into the model. This allows the use of ImageNet-pretrained DenseNet201 while preserving the grayscale medical image content.
+
+The DenseNet201 classifier head was replaced with a linear layer producing five output classes, corresponding to KL grades 0–4. We trained two DenseNet variants: one with standard cross-entropy loss and one with weighted cross-entropy loss.
+
+The weighted cross-entropy variant computes class weights from the training split using the inverse class frequency formula:
+
+`class_weight = number_of_training_samples / (number_of_classes × class_count)`
+
+This was done to reduce the dominance of majority classes during optimization.
+
+For both DenseNet variants, the model checkpoint was selected using the best validation macro-F1 score rather than the final training epoch. This was necessary because later epochs showed signs of overfitting.
+
+
+## KW21 - 20 May 2026
+
+### Decision: Baseline model selection after evaluation
+
+| Model | Accuracy | Macro Precision | Macro Recall | Macro-F1 |
+|---|---:|---:|---:|---:|---:|
+| DenseNet201 + CE | 0.6877 | 0.6795 | 0.6994 | 0.6858 |
+| DenseNet201 + weighted CE | 0.6610 | 0.6907 | 0.6863 | 0.6870 | 
+| ResNet + CE | 0.6723 | 0.6775 | 0.6698 | 0.6716 | - |
+| ResNet + weighted CE | 0.6489 | 0.6908 | 0.6554 | 0.6696 | - |
+
+We selected DenseNet201 with weighted cross-entropy as the primary baseline for the XAI analysis. Although DenseNet201 with standard cross-entropy achieved the highest accuracy, DenseNet201 with weighted cross-entropy achieved the highest macro-F1. Since the dataset is imbalanced, we prioritized macro-F1 over just accuracy. 
+
+The selected DenseNet weighted CE model will be used as the baseline for H1.

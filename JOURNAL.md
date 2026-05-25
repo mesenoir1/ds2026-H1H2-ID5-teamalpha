@@ -137,6 +137,7 @@ Therefore we discussed (see above) several methods to improve the baseline.
 
 2. **Gaussian Noise Augumentation**
    Instead of downsampling we chose a gaussian noise augumentation to cancel/average out unvisible device artefacts.
+Gaussian noise injection is an established adversarial augmentation technique in medical imaging that prevents convolutional neural networks from memorizing scanner-specific noise profiles as shortcuts. By artificially introducing high-frequency noise during training, the model is forced to ignore these artifacts and instead learn robust, low-frequency biological features such as joint structure and bone morphology.
 
 Overall the Grad-Cam heatmaps now give more reasonable and smaller areas.
 The Background is becoming significantly less part of the prediction, however its not totally avoided.

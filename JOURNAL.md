@@ -97,3 +97,32 @@ For both DenseNet variants, the model checkpoint was selected using the best val
 We selected DenseNet201 with weighted cross-entropy as the primary baseline for the XAI analysis. Although DenseNet201 with standard cross-entropy achieved the highest accuracy, DenseNet201 with weighted cross-entropy achieved the highest macro-F1. Since the dataset is imbalanced, we prioritized macro-F1 over just accuracy. 
 
 The selected DenseNet weighted CE model will be used as the baseline for H1.
+
+## KW22 - 25 May 2026
+
+### Decision: Grad-CAM
+
+We implemented Grad-CAM for the selected baseline CNN. This step is required for H1 because we need to identify cases where the model predicts the correct KL grade but appears to rely on visually non-diagnostic regions. Grad-CAM was chosen because it is compatible with CNN backbones such as DenseNet and provides localized activation maps that can be compared against image regions expected to contain diagnostically relevant knee anatomy.
+
+For each case, we will store the input image, true label, predicted label, prediction probability, Grad-CAM heatmap, and overlay visualization.
+
+The next step is to define a prediction-relevant diagnostic region that can be used. This region will allow us to quantify how much model attention falls inside versus outside the expected knee joint area.
+
+### Decision: Methods for defining prediction-relevant regions
+
+We decided to test three possible approaches for identifying the prediction-important or diagnostically relevant image region:
+
+1. **Segmentation**  
+   We will test whether a segmentation-based approach can isolate the knee joint or relevant bone/joint-space structure. This is the most direct option if it produces stable masks, but it may require additional implementation effort and could fail if the X-ray images are too variable or low-contrast.
+
+2. **Canny edge detection**  
+   We will test whether edge detection can provide a lightweight anatomical proxy by detecting strong structural boundaries in the knee X-rays. This approach is computationally cheap, but it may also capture non-diagnostic edges such as borders, artifacts, or cropping boundaries.
+
+3. **Downsampling / quantization**  
+   We will test whether reducing image resolution or quantizing spatial regions can produce a robust coarse region-of-interest estimate. This may be useful if exact anatomical segmentation is unreliable, because the goal is not perfect medical segmentation but a reproducible proxy for comparing saliency concentration across regions.
+
+We will compare these approaches based on mask stability, interpretability, failure rate, and usefulness. The selected method will be used to define the unfaithful-case selection rule for H1.
+
+### Next step
+
+The next step is to run qualitative and quantitative tests for the three region-definition methods. Based on the method that produces the most reliable and interpretable masks, we will define a fixed scoring rule and use it to identify the H1 subset.

@@ -3,7 +3,7 @@ data/.cache
 data/data.zip
 outputs/densenet_ce/best_model.pt
 outputs/densenet_weighted_ce/best_model.pt
-report/figures/*
+outputs/gradcam/*
 models/*
 runlogs/*
 __pycache__/

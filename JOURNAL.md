@@ -126,3 +126,21 @@ We will compare these approaches based on mask stability, interpretability, fail
 ### Next step
 
 The next step is to run qualitative and quantitative tests for the three region-definition methods. Based on the method that produces the most reliable and interpretable masks, we will define a fixed scoring rule and use it to identify the H1 subset.
+
+### Decision: Experiments for defining prediction-relevant regions and reduce biases relying on device artefacts
+
+The Grad-CAM maps revealed that our model bases its decisions on regions that should not contain any relevant information, such as the black background areas in the X-ray images.
+Therefore we discussed (see above) several methods to improve the baseline.  
+1. **Segmentation** 
+   Here we decide to use Anatomical Cropping (ROI Extraction) Tiulpin et al. (2018) and Antony et al. (2017)
+   This method simply crops the black background, s.t. the model is forced to look at the bones
+
+2. **Gaussian Noise Augumentation**
+   Instead of downsampling we chose a gaussian noise augumentation to cancel/average out unvisible device artefacts.
+
+Overall the Grad-Cam heatmaps now give more reasonable and smaller areas.
+The Background is becoming significantly less part of the prediction, however its not totally avoided.
+
+## next step
+This experiments were only done in a sandbox, not yet optimized. The train seems to need more epochs till convergence than the previous baseline, but we took the same amount.
+We aloso didnt do experiments with different hyperparameters on that augumentation

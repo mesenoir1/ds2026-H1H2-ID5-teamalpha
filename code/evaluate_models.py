@@ -21,7 +21,7 @@ from densenet_dataset import KneeOADataset # private import
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 TEST_CSV = PROJECT_ROOT / "data" / "splits" / "test.csv"
 OUTPUT_DIR = PROJECT_ROOT / "outputs"
-EVAL_DIR = PROJECT_ROOT / "data" / "eval_elina"
+EVAL_DIR = PROJECT_ROOT / "data" / "eval"
 FIGURE_DIR = PROJECT_ROOT / "report" / "figures"
 
 MODELS_TO_EVALUATE = ["densenet_ce", "densenet_weighted_ce"]
@@ -187,7 +187,7 @@ def evaluate(model_name, device, dataloader):
     plt.xlabel("Predicted KL Grade")
 
     FIGURE_DIR.mkdir(parents=True, exist_ok=True)
-    fig_out_path = FIGURE_DIR / f"cm_elina_{model_name}.png"
+    fig_out_path = FIGURE_DIR / f"cm__{model_name}.png"
     plt.savefig(fig_out_path, dpi=200, bbox_inches="tight")
     plt.close()
     print(f"Confusion Matrix gespeichert: {fig_out_path}")

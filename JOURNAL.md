@@ -142,6 +142,48 @@ Gaussian noise injection is an established adversarial augmentation technique in
 Overall the Grad-Cam heatmaps now give more reasonable and smaller areas.
 The Background is becoming significantly less part of the prediction, however its not totally avoided.
 
-## next step
+## Next step
 This experiments were only done in a sandbox, not yet optimized. The train seems to need more epochs till convergence than the previous baseline, but we took the same amount.
 We aloso didnt do experiments with different hyperparameters on that augumentation
+
+## KW22 - 28 May 2026
+
+### Decision: Continue crop/noise experiments
+
+After the previous sandbox experiments, we decided to further investigate the crop + Gaussian noise setup instead of immediately replacing the baseline. The current official baseline remains **DenseNet201 with weighted cross-entropy**, because it is the model used for the first Grad-CAM-based failure analysis. The crop + Gaussian noise model will be treated as an intervention candidate rather than as the new baseline.
+
+---
+
+### Decision: Candidate methods for defining prediction-relevant anatomical regions
+
+We explored several heuristic methods for defining a diagnostically plausible region in the knee X-ray images. Because we do not have pixel-level anatomical annotations, these masks are not treated as ground truth segmentations. Instead, they are reproducible proxies for measuring whether Grad-CAM activation is broadly inside the expected knee/joint region or outside it.
+
+The explored methods were:
+
+1. **Central rectangle**  
+   A fixed rectangular region in the center of the image. This was considered too simple because it includes too much irrelevant area and does not match the anatomical shape well.
+
+2. **Central ellipse**  
+   A fixed elliptical region centered around the expected knee anatomy. This is simple, stable, and anatomically more plausible than a rectangle.
+
+3. **Central joint-band mask**  
+   A narrower horizontal band inside the central knee region, intended to approximate the tibiofemoral joint-space area. This is clinically relevant because KL grading depends strongly on joint-space narrowing and nearby bone changes.
+
+4. **Otsu central mask**  
+   A threshold-based mask using Otsu binarization restricted to the central region. Initial inspection suggested that it was unstable and often selected structures that were not reliable diagnostic proxies.
+
+5. **Inverted Otsu central mask**  
+   An inverted threshold-based central mask. It produced very small masks with high enrichment but low absolute Grad-CAM coverage, so we decided not to use it in the final suspicious-case rule.
+
+6. **Canny central mask**  
+   An edge-based mask restricted to the center. This was rejected because Canny produces thin edge contours, while Grad-CAM is a coarse regional heatmap; therefore, overlap scores are not well matched.
+
+7. **Quantized central mask**  
+   A coarse image-adaptive mask based on downsampling/quantization and central restriction. This method is more adaptive than a fixed ellipse while being more stable than raw thresholding.
+
+8. **Border mask**  
+   A non-diagnostic mask covering the outer image border. This is not used as an anatomical region; instead, it measures how much Grad-CAM activation falls into peripheral areas where shortcut cues or artifacts may appear.
+
+## Next step
+
+We decided to continue tests with three diagnostic-region proxies (central_ellipse, quantized_central, central_joint_band), while still exploring some other methods.

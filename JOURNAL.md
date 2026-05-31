@@ -187,3 +187,75 @@ The explored methods were:
 ## Next step
 
 We decided to continue tests with three diagnostic-region proxies (central_ellipse, quantized_central, central_joint_band), while still exploring some other methods.
+
+## KW22 - 31 May 2026
+
+### Decision: Suspicious-case detection using diagnostic Grad-CAM region scores
+
+We completed the first full suspicious-case detection run for the DenseNet201 + weighted cross-entropy baseline. The goal was to identify correctly classified knee X-ray cases where the model may have predicted the correct KL grade while relying less on diagnostically relevant image regions.
+
+We used predicted-class Grad-CAM because the research question asks why the model made its actual prediction. The current Grad-CAM layer is DenseNet201 `denseblock4`.
+
+A case was only considered for suspicious-case detection if it was classified correctly. A correctly classified case was flagged as suspicious if either of the following conditions was true:
+
+1. At least 2 of the 3 selected diagnostic masks had low inside-mask Grad-CAM activation.
+2. Border attention was high.
+
+The selected diagnostic proxy masks were:
+
+- `central_ellipse`
+- `quantized_central`
+- `central_joint_band`
+
+The additional non-diagnostic attention metric was:
+
+- `border_attention_score`
+
+Configuration:
+
+```text
+model = DenseNet201 + weighted cross-entropy
+Grad-CAM target = predicted class
+Grad-CAM layer = DenseNet201 denseblock4
+only_correct = true
+suspicion_quantile = 0.20
+border_quantile = 0.80
+min_low_methods = 2
+topk_fraction = 0.10
+```
+
+The suspicious-case detection was run on correctly classified training cases.
+
+```text
+Correct training cases evaluated: 4454
+Suspicious training cases: 971
+Suspicious fraction: 21.8%
+Low-region-attention cases: 895
+High-border-attention cases: 891
+```
+Threshhold:
+
+```text
+central_ellipse_inside_ratio <= 0.5496
+quantized_central_inside_ratio <= 0.3892
+central_joint_band_inside_ratio <= 0.2870
+border_attention_score >= 0.1953
+```
+
+The same suspicious-case detection procedure was run on correctly classified validation cases.
+
+```text
+Correct validation cases evaluated: 851
+Suspicious validation cases: 188
+Suspicious fraction: 22.1%
+Low-region-attention cases: 173
+High-border-attention cases: 171
+```
+Threshold:
+
+```text
+central_ellipse_inside_ratio <= 0.5499
+quantized_central_inside_ratio <= 0.3980
+central_joint_band_inside_ratio <= 0.2882
+border_attention_score >= 0.1939
+```

@@ -137,7 +137,7 @@ def save_png(array: np.ndarray, output_path: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--csv", default="data/splits/train.csv")
+    parser.add_argument("--csv", default="data/splits/test.csv")
     parser.add_argument("--checkpoint", default="outputs/densenet_weighted_ce/best_model.pt")
     parser.add_argument("--output-dir", default="outputs/gradcam/densenet_weighted_ce")
     parser.add_argument("--split", default="test", choices=["train", "val", "test"])

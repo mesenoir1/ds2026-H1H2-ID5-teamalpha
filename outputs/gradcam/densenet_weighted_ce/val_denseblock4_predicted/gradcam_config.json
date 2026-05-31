@@ -1,0 +1,10 @@
+{
+  "csv": "data/splits/val.csv",
+  "checkpoint": "outputs/densenet_weighted_ce/best_model.pt",
+  "output_dir": "outputs/gradcam/densenet_weighted_ce/val_denseblock4_predicted",
+  "split": "val",
+  "target_layer": "model.features.denseblock4",
+  "target_for_gradcam": "predicted",
+  "num_images": 1239,
+  "alpha": 0.35
+}

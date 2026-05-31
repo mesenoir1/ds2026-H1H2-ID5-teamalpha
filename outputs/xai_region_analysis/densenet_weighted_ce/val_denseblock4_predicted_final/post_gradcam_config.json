@@ -1,0 +1,31 @@
+{
+  "split_csv": "data/splits/val.csv",
+  "predictions_csv": "outputs/gradcam/densenet_weighted_ce/val_denseblock4_predicted/gradcam_predictions.csv",
+  "heatmap_dir": "outputs/gradcam/densenet_weighted_ce/val_denseblock4_predicted/heatmaps",
+  "output_dir": "outputs/xai_region_analysis/densenet_weighted_ce/val_denseblock4_predicted_final",
+  "only_correct": true,
+  "max_images": null,
+  "num_debug_figures": 100,
+  "save_masks": false,
+  "diagnostic_methods": [
+    "central_ellipse",
+    "quantized_central",
+    "central_joint_band"
+  ],
+  "suspicion_quantile": 0.2,
+  "border_quantile": 0.8,
+  "min_low_methods": 2,
+  "topk_fraction": 0.1,
+  "thresholds": {
+    "central_ellipse_inside_ratio_low_threshold": 0.5498732110834775,
+    "quantized_central_inside_ratio_low_threshold": 0.3980339453735966,
+    "central_joint_band_inside_ratio_low_threshold": 0.28819144709411326,
+    "border_attention_high_threshold": 0.19394162412303306
+  },
+  "num_region_score_rows": 3404,
+  "num_cases_evaluated": 851,
+  "num_suspicious_cases": 188,
+  "suspicious_fraction": 0.2209165687426557,
+  "missing_images": 0,
+  "missing_heatmaps": 0
+}

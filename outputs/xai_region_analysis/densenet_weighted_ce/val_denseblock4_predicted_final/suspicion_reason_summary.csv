@@ -1,0 +1,5 @@
+suspicion_reason,count,fraction
+not_suspicious,663,0.7790834312573442
+low_region_and_high_border,156,0.18331374853113983
+low_region_attention,17,0.0199764982373678
+high_border_attention,15,0.01762632197414806

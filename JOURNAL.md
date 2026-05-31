@@ -259,3 +259,26 @@ quantized_central_inside_ratio <= 0.3980
 central_joint_band_inside_ratio <= 0.2882
 border_attention_score >= 0.1939
 ```
+### Decision: ROI Analysis and Data Cleanup
+
+Since inverted images complicate Region of Interest (ROI) detection, we implemented a data cleanup strategy enabling on-the-fly inversion. To evaluate the model's visual focus, we accumulated Grad-CAM heatmaps across 100 balanced samples per class. 
+
+![Accumulated Gradcam Baseline](report/figures/gradcam_accum_baseline.png)
+*Figure 1: Accumulated Grad-CAM - Baseline Model*
+
+![Accumulated Gradcam Baseline](report/figures/gradcam_accum_gauss_crop.png)
+*Figure 2: Accumulated Grad-CAM - Gauss & Crop Model*
+
+The accumulated heatmaps reveal recognizable differences between the models. To interpret these patterns, we cross-referenced the activations with the OARSI (Osteoarthritis Research Society International) guidelines for Kellgren-Lawrence (KL) grading, which define specific anatomical regions of interest:
+
+* **KL 0:** General joint space (wide and even).
+* **KL 1 & 2:** Joint margins (emerging osteophytes) and initial joint space narrowing.
+* **KL 3 & 4:** Severe joint space narrowing, subchondral sclerosis, and structural bone deformation.
+
+**Observations & Hypothesis:**
+The heatmaps demonstrate that the joint space heavily influences the model's predictions, aligning well with clinical methodology. Notably, the model trained with Gaussian blur and cropping shows distinctly higher attention on marginal osteophytes for KL2 predictions. For KL3 and KL4, the strong activation around the outer margins is likely a reaction to advanced bone deformation. 
+
+To definitively confirm whether the model focuses on these exact anatomical anomalies, a higher-resolution visualization technique (e.g., HiResCAM or Grad-CAM++) is required.
+
+**Open Question for Further Strategy:**
+Given that the diagnostic focus shifts depending on the severity of the disease, should we consider implementing **class-specific ROI masks** to explicitly define and evaluate where the model *should* be looking for each KL grade?

@@ -4,6 +4,8 @@ data/data.zip
 outputs/densenet_ce/best_model.pt
 outputs/densenet_weighted_ce/best_model.pt
 outputs/gradcam/*
+outputs/xai_region_analysis/densenet_weighted_ce/train_denseblock4_predicted_final/debug_figures
+outputs/xai_region_analysis/densenet_weighted_ce/val_denseblock4_predicted_final/debug_figures
 models/*
 runlogs/*
 __pycache__/

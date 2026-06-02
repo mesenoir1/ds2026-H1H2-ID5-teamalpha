@@ -282,3 +282,16 @@ To definitively confirm whether the model focuses on these exact anatomical anom
 
 **Open Question for Further Strategy:**
 Given that the diagnostic focus shifts depending on the severity of the disease, should we consider implementing **class-specific ROI masks** to explicitly define and evaluate where the model *should* be looking for each KL grade?
+
+
+## KW23 - 1 June 2026
+
+### Decision: Change of region detection method for Grad-CAM overlap analysis
+
+We decided to replace the previous multi-mask diagnostic-region setup with a new region detection method, used together with border detection. The updated XAI analysis will therefore use two region-related components: the new method for estimating the relevant knee region and a separate border detection metric for identifying attention on non-diagnostic image borders.
+
+This change was made because the previous setup relied on several proxy masks, which made the suspicious-case rule harder to explain and compare. The new method is intended to provide a cleaner and more reproducible definition of the relevant image region, while border detection remains important because the project brief explicitly focuses on cases where the model may rely on borders, scanner artifacts, or other non-diagnostic regions rather than clinically relevant knee anatomy.
+
+The suspicious-case logic will be updated accordingly. A correctly classified image can be considered suspicious if the Grad-CAM activation is low inside the region detected by the new method, or if the border attention score is high.
+
+This change affects H1 directly because it changes how we operationalise “diagnostically unfaithful” saliency. It may also affect H2 because the suspicious cases identified by this updated rule can later be used for XAI-guided intervention experiments. We will document the new method, its thresholds, and example visualizations before using it for final suspicious-case statistics.

@@ -295,3 +295,30 @@ This change was made because the previous setup relied on several proxy masks, w
 The suspicious-case logic will be updated accordingly. A correctly classified image can be considered suspicious if the Grad-CAM activation is low inside the region detected by the new method, or if the border attention score is high.
 
 This change affects H1 directly because it changes how we operationalise “diagnostically unfaithful” saliency. It may also affect H2 because the suspicious cases identified by this updated rule can later be used for XAI-guided intervention experiments. We will document the new method, its thresholds, and example visualizations before using it for final suspicious-case statistics.
+
+
+## KW23 - 3 June 2026
+
+### Decision: Dynamic Region of Interest (ROI) Extraction Pipeline for Knee Osteoarthritis X-Ray Images
+
+Like previously mentioned we decide to change how the region is detected using a pipeline of methods as described in the following:
+We have developed a robust preprocessing and segmentation methodology leveraging classical computer vision and morphological image processing techniques. This pipeline automatically generates a binary region of interest (ROI) mask that serves as an empirically sound heuristic for isolating the relevant joint structures. In the context of our classification workflow, this mask will be integrated with Gradient-weighted Class Activation Mapping (Grad-CAM) to establish a rigorous metric for evaluating model interpretability. Specifically, it will quantify whether the deep learning model's classifications (e.g., DenseNet-based knee osteoarthritis grading) are grounded in anatomically reasonable regions. Ultimately, this interpretability metric will serve as a benchmark and feedback mechanism to guide iterative model optimization and enhance generalization.
+
+---
+
+#### Pipeline Architecture & Implementation Steps
+
+The pipeline processes an input image (either as a file path or a pre-loaded NumPy array) and outputs a strictly binary mask ($0$ and $1$) matching the exact dimensions of the original image. The process consists of three main stages: Preprocessing, Morphological Segmentation, and Joint Space Localization with Dynamic Cropping.
+
+```
++------------------+      +-------------------------+      +-------------------------+
+|   Input Image    | ---> | 2.1 Inversion Detection | ---> | 2.2 Contrast & Intensity|
+| (Path or Array)  |      |   & Correction          |      |     Normalization       |
++------------------+      +-------------------------+      +-------------------------+
+                                                                        |
+                                                                        v
++------------------+      +-------------------------+      +-------------------------+
+|   Binary Mask    | <--- | 2.4 Joint Space Line    | <--- | 2.3 Morphological       |
+|   (Values 0 / 1) |      |     & Dynamic Crop      |      |     Pipeline            |
++------------------+      +-------------------------+      +-------------------------+
+```

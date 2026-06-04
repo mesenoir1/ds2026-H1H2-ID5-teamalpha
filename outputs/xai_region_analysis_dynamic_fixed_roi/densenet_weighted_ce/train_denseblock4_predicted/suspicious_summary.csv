@@ -1,0 +1,2 @@
+n_total,n_correct,n_suspicious,suspicious_fraction_total,suspicious_fraction_correct,roi_threshold,border_threshold,mean_dynamic_roi_inside_ratio_correct,mean_border_attention_score_correct,mean_dynamic_roi_area_ratio_correct,mean_border_area_ratio_correct,num_debug_figures_per_group
+5782,4454,767,0.1326530612244898,0.172204759766502,0.4,0.2,0.6353075981795291,0.17087519127889086,0.36105304478661693,0.28053252551020413,25

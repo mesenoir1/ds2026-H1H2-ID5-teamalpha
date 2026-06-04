@@ -322,3 +322,34 @@ The pipeline processes an input image (either as a file path or a pre-loaded Num
 |   (Values 0 / 1) |      |     & Dynamic Crop      |      |     Pipeline            |
 +------------------+      +-------------------------+      +-------------------------+
 ```
+## KW23 - 4 June 2026
+
+### Decision: Refinement of dynamic ROI extraction after failed cases
+
+During visual inspection of the dynamic ROI debug figures, we found that the ROI detector can fail on images containing metallic bolts, screws, or fixation hardware. In these cases, the very bright metal structures can dominate the thresholding and contour-selection steps, causing the mask to partially focus on hardware rather than the knee joint region.
+
+The updated ROI pipeline still detects the joint-space position dynamically for each image, but adds several safeguards:
+1. very bright metal-like pixels are suppressed before thresholding;
+2. the joint-space line is detected after this suppression step;
+3. the vertical joint-line search range is shifted toward the lower-middle image region;
+4. thresholded ROI candidates are restricted to a search window around the detected joint-space line;
+5. contour selection no longer takes the largest bright contour globally, but only considers contours near the joint-space window;
+6. if no valid contour is found, the script falls back to the joint-space search window instead of selecting a hardware artifact.
+
+### Decision: Updated suspicious-case detection using dynamic ROI and border attention
+
+We updated the suspicious-case detection script according to our new method. The new script uses only two saliency-based metrics:
+
+```text
+dynamic_roi_inside_ratio = Grad-CAM activation inside the dynamic ROI / total Grad-CAM activation
+border_attention_score = Grad-CAM activation inside the image border / total Grad-CAM activation
+```
+```text
+suspicious_case = correct prediction AND (
+    dynamic_roi_inside_ratio < 0.40
+    OR
+    border_attention_score > 0.20
+)
+```
+
+Using the dynamic ROI-based suspicious-case rule, 17.3% of correctly classified training cases and 16.6% of correctly classified validation cases were flagged as suspicious. The close agreement between train and validation suggests that the rule captures a stable saliency pattern rather than a split-specific artifact. Most flagged cases were driven by high border attention rather than low dynamic-ROI attention, indicating that the baseline model generally activates within the estimated knee region but still relies on image-border regions for a measurable subset of correct predictions.

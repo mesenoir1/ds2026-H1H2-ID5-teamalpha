@@ -196,57 +196,54 @@ outputs/gradcam/densenet_weighted_ce/
 ```
 
 ### 8. Suspicious cases detection
+
 For validation split:
 
 ```bash
-python code/post_gradcam_region_analysis_final.py \
-  --split-csv data/splits/val.csv \
-  --predictions-csv outputs/gradcam/densenet_weighted_ce/val_denseblock4_predicted/gradcam_predictions.csv \
-  --heatmap-dir outputs/gradcam/densenet_weighted_ce/val_denseblock4_predicted/heatmaps \
-  --output-dir outputs/xai_region_analysis/densenet_weighted_ce/val_denseblock4_predicted_final \
-  --only-correct \
-  --suspicion-quantile 0.20 \
-  --border-quantile 0.80 \
-  --min-low-methods 2 \
-  --topk-fraction 0.10 \
-  --num-debug-figures 100
+python code/suspicious_cases_dynamic.py \
+  --gradcam-csv outputs/gradcam/densenet_weighted_ce/val_denseblock4_predicted/gradcam_predictions.csv \
+  --inversion-qc-csv outputs/data_quality/inversion_qc.csv \
+  --output-dir outputs/xai_region_analysis_dynamic_fixed_roi/densenet_weighted_ce/val_denseblock4_predicted \
+  --roi-threshold 0.40 \
+  --border-threshold 0.20 \
+  --border-frac 0.08 \
+  --num-debug-figures 25
 ```
 
 For train split:
 
 ```bash
-python code/post_gradcam_region_analysis_final.py \
-  --split-csv data/splits/train.csv \
-  --predictions-csv outputs/gradcam/densenet_weighted_ce/train_denseblock4_predicted/gradcam_predictions.csv \
-  --heatmap-dir outputs/gradcam/densenet_weighted_ce/train_denseblock4_predicted/heatmaps \
-  --output-dir outputs/xai_region_analysis/densenet_weighted_ce/train_denseblock4_predicted_final \
-  --only-correct \
-  --suspicion-quantile 0.20 \
-  --border-quantile 0.80 \
-  --min-low-methods 2 \
-  --topk-fraction 0.10 \
-  --num-debug-figures 100
+python code/suspicious_cases_dynamic.py \
+  --gradcam-csv outputs/gradcam/densenet_weighted_ce/train_denseblock4_predicted/gradcam_predictions.csv \
+  --inversion-qc-csv outputs/data_quality/inversion_qc.csv \
+  --output-dir outputs/xai_region_analysis_dynamic_fixed_roi/densenet_weighted_ce/train_denseblock4_predicted \
+  --roi-threshold 0.40 \
+  --border-threshold 0.20 \
+  --border-frac 0.08 \
+  --num-debug-figures 25
 ```
 
 Expected output:
 ```text
-outputs/xai_region_analysis/densenet_weighted_ce/
-├── train_denseblock4_predicted_final/
-└── val_denseblock4_predicted_final/
+outputs/xai_region_analysis_dynamic/densenet_weighted_ce/
+├── train_denseblock4_predicted/
+└── val_denseblock4_predicted/
 ```
 
 Each analysis folder contains:
 
 ```text
-region_scores.csv
-region_method_summary.csv
-all_cases_with_suspicion_flags.csv
+all_cases_dynamic_roi_scores.csv
 suspicious_cases.csv
 suspicious_summary.csv
 suspicion_reason_summary.csv
-post_gradcam_config.json
-skipped_rows.csv
+classwise_suspicious_summary.csv
 debug_figures/
+├── suspicious/
+├── low_roi/
+├── high_border/
+├── non_suspicious_correct/
+└── likely_inverted/
 ```
 
 

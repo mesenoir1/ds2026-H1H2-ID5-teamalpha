@@ -276,6 +276,53 @@ code/models_try/
 ```
 These scripts were trained on the SIC HPC cluster.
 
+### 10. Model evaluation
+
+After training, all models are evaluated on the held-out test split using the evaluation script.
+
+Most standard DenseNet201 models are evaluated with:
+
+```bash
+python code/evaluate_models.py
+```
+Before running the script, update the model list inside code/evaluate_models.py:
+```bash
+MODELS_TO_EVALUATE = [
+    "densenet_weighted_ce",
+    "m2_noinv_blur",
+    "m2_inv_blur",
+    "m2_noinv_blur_darken",
+    "m2_noinv_darken",
+    "m2_noinv_blur_suppression75",
+    "m2_noinv_blur_crop_noise",
+    "m3_suspicious05_noinv_blur",
+]
+```
+
+Also can be run in a cluster.
+```bash
+condor_submit jobs/submit_eval.sub
+```
+or
+
+```bash
+condor_submit jobs/submit_eval_loss.sub
+```
+
+Expected output:
+```text
+data/eval/eval_<model_name>.csv
+data/eval/summary_<model_name>.csv
+data/eval/predictions_<model_name>.csv
+data/eval/model_comparison.csv
+report/figures/cm__<model_name>.png
+```
+For ROI-loss / explanation-loss models, use the separate evaluator because these models may not use the same checkpoint structure or forward pass as the plain DenseNet201 classifier:
+```bash
+python code/evaluate_roi_loss.py
+```
+The final comparison table in the report and journal is based on the generated summary_<model_name>.csv files.
+
 ## Cluster configurations and workflow
 
 These scripts were trained on the SIC HPC cluster using HTCondor with Docker. The standard Docker image was:

@@ -1,0 +1,21 @@
+universe                = docker
+docker_image            = pytorch/pytorch:2.3.1-cuda12.1-cudnn8-devel
+
+executable              = run_densenet_dynamic_smoothing_aug.sh
+
+output                  = runlogs/densenet_dynamic_smoothing_aug.$(ClusterId).$(ProcId).out
+error                   = runlogs/densenet_dynamic_smoothing_aug.$(ClusterId).$(ProcId).err
+log                     = runlogs/densenet_dynamic_smoothing_aug.$(ClusterId).log
+
+should_transfer_files   = YES
+when_to_transfer_output = ON_EXIT
+
+request_GPUs            = 1
+request_CPUs            = 4
+request_memory          = 16G
+
+requirements            = UidDomain == "cs.uni-saarland.de"
++WantGPUHomeMounted     = true
++WantScratchMounted     = true
+
+queue 1

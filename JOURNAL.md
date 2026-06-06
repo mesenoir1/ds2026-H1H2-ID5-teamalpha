@@ -353,3 +353,4 @@ suspicious_case = correct prediction AND (
 ```
 
 Using the dynamic ROI-based suspicious-case rule, 17.3% of correctly classified training cases and 16.6% of correctly classified validation cases were flagged as suspicious. The close agreement between train and validation suggests that the rule captures a stable saliency pattern rather than a split-specific artifact. Most flagged cases were driven by high border attention rather than low dynamic-ROI attention, indicating that the baseline model generally activates within the estimated knee region but still relies on image-border regions for a measurable subset of correct predictions.
+

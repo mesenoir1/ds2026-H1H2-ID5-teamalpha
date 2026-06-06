@@ -2,19 +2,37 @@ data/kneeosteoarthritis
 data/.cache
 data/data.zip
 
+#baselines
 outputs/densenet_ce/best_model.pt
 outputs/densenet_weighted_ce/best_model.pt
 
-outputs/gradcam/densenet_weighted_ce/train_denseblock4_predicted/heatmaps
-outputs/gradcam/densenet_weighted_ce/train_denseblock4_predicted/originals
-outputs/gradcam/densenet_weighted_ce/train_denseblock4_predicted/overlays
-outputs/gradcam/densenet_weighted_ce/val_denseblock4_predicted/heatmaps
-outputs/gradcam/densenet_weighted_ce/val_denseblock4_predicted/originals
-outputs/gradcam/densenet_weighted_ce/val_denseblock4_predicted/overlays
+# intervention models
+# Model checkpoints / trained weights
+outputs/**/best_model.pt
+outputs/**/*.pt
+outputs/**/*.pth
+outputs/**/*.ckpt
+
+# Large Grad-CAM outputs
+outputs/**/*.npy
+outputs/**/*.npz
+
+# Generated visual outputs
+outputs/**/heatmaps/
+outputs/**/overlays/
+outputs/**/originals/
+outputs/**/debug_figures/
 
 
 outputs/xai_region_analysis/densenet_weighted_ce/train_denseblock4_predicted_final/debug_figures
 outputs/xai_region_analysis/densenet_weighted_ce/val_denseblock4_predicted_final/debug_figures
+
+outputs/xai_region_analysis_dynamic_fixed_roi/*
+
+# old methods that were replaced
+outputs/xai_region_analysis/*
+outputs/xai_region_analysis_dynamic/*
+
 
 runlogs/*
 __pycache__/

@@ -1,0 +1,11 @@
+metric,value
+num_images,7021
+num_missing_images,0
+num_likely_inverted,89
+likely_inverted_fraction,0.012676256943455349
+flagging_rule,threshold=0.1
+border_frac,0.08
+mean_inversion_score,-0.2509037153857706
+median_inversion_score,-0.24981975555419922
+p95_inversion_score,-0.1688847839832306
+p99_inversion_score,0.1972325563430789

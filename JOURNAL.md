@@ -354,3 +354,30 @@ suspicious_case = correct prediction AND (
 
 Using the dynamic ROI-based suspicious-case rule, 17.3% of correctly classified training cases and 16.6% of correctly classified validation cases were flagged as suspicious. The close agreement between train and validation suggests that the rule captures a stable saliency pattern rather than a split-specific artifact. Most flagged cases were driven by high border attention rather than low dynamic-ROI attention, indicating that the baseline model generally activates within the estimated knee region but still relies on image-border regions for a measurable subset of correct predictions.
 
+## KW23 - 5 June 2026
+
+### Decision: RQ2 intervention model comparison
+
+After completing the RQ1 suspicious-case analysis with predicted-class Grad-CAM, dynamic ROI overlap, and border attention, we trained several RQ2 intervention models. The purpose was to test whether reducing the model's access to non-diagnostic background regions during training improves both classification performance and saliency faithfulness.
+
+| Model | Main intervention | Accuracy | Macro precision | Macro recall | Macro-F1 | Weighted-F1 | Interpretation |
+|---|---|---:|---:|---:|---:|---:|---|
+| `densenet_weighted_ce` | B1 baseline, weighted CE | 0.6610 | 0.6907 | 0.6863 | 0.6870 | 0.6619 | Official baseline |
+| `m2_noinv_blur` | No-inversion ROI mask, blur outside ROI, suppression=0.5 | 0.7006 | 0.6921 | 0.7073 | 0.6953 | 0.6856 | Best overall intervention so far |
+| `m2_inv_blur` | ROI mask with inversion handling, blur outside ROI, suppression=0.5 | 0.6489 | 0.6827 | 0.6752 | 0.6653 | 0.6473 | Worse than baseline |
+| `m2_noinv_blur_darken` | No-inversion ROI mask, blur + darken outside ROI, suppression=0.5 | 0.6473 | 0.6931 | 0.6875 | 0.6798 | 0.6551 | Worse than baseline macro-F1 |
+| `m2_noinv_blur_suppression75` | No-inversion ROI mask, blur outside ROI, suppression=0.75 | 0.6400 | 0.7105 | 0.7097 | 0.6871 | 0.6560 | Macro-F1 similar to baseline, accuracy lower |
+| `m2_noinv_blur_crop_noise` | No-inversion blur with crop/noise augmentation | 0.6828 | 0.6929 | 0.6961 | 0.6910 | 0.6730 | Better than baseline accuracy, not better than M2 blur |
+| `m2_noinv_darken` | No-inversion ROI mask, darken outside ROI, suppression=0.5 | 0.6336 | 0.6909 | 0.6914 | 0.6851 | 0.6470 | No clear benefit |
+| `m3_suspicious1_noinv_blur` | Suspicious-case targeted no-inversion blur, suspicious suppression=1.0 | 0.6425 | 0.6505 | 0.6611 | 0.6530 | 0.6386 | Failed intervention |
+| `m3_suspicious05_noinv_blur` | Suspicious-case targeted no-inversion blur, suspicious suppression=0.5 | 0.6747 | 0.6792 | 0.6971 | 0.6875 | 0.6728 | Comparable macro-F1 to baseline, not better than M2 |
+| `m2_noinv_blur31` | No-inversion ROI mask, larger blur kernel 31, suppression=0.5 | 0.6885 | 0.6678 | 0.6932 | 0.6723 | 0.6680 | Accuracy improves, macro-F1 drops |
+| `m2_noinv_blur_focal_gamma15` | No-inversion blur with weighted focal loss | 0.6328 | 0.6847 | 0.6828 | 0.6787 | 0.6419 | Worse than baseline |
+| `m2_noinv_blur_dynamic_focal` | No-inversion blur with dynamic focal loss | 0.6586 | 0.6737 | 0.6730 | 0.6707 | 0.6552 | Worse than baseline |
+| `m2_noinv_blur_susp_ls010_noise002` | No-inversion blur + suspicious-case label smoothing 0.10 + Gaussian noise std 0.02 | 0.6465 | 0.6594 | 0.6874 | 0.6664 | 0.6525 | Worse than baseline |
+| `densenet_dynamic_smoothing` | Dynamic smoothing intervention | 0.6723 | 0.6800 | 0.6942 | 0.6855 | 0.6669 | Accuracy improves over baseline, macro-F1 slightly lower |
+| `m2_noinv_blur_continued_roi_loss` | Continued/intervention variant with ROI-related regularisation naming | 0.6804 | 0.7035 | 0.6952 | 0.6941 | 0.6854 | Strong secondary result, still below M2 no-inv blur |
+| `m2_densenet_roi_loss_gaussian_noise_continued_noinv_blur` | Continued no-inversion blur with ROI-loss variant + Gaussian noise | 0.6723 | 0.7009 | 0.6982 | 0.6932 | 0.6752 | Secondary result; below main M2 blur |
+| `m2_densenet_roi_loss_noborder_continued_noinv_blur` | Continued no-inversion blur with ROI-loss variant without border penalty | 0.6659 | 0.6976 | 0.6981 | 0.6951 | 0.6671 | Macro-F1 close to main M2, but lower accuracy |
+| `densenet_roi_loss_gaussian_noise` | ROI-loss / explanation-loss variant with Gaussian noise | 0.6828 | 0.6869 | 0.6767 | 0.6776 | 0.6673 | Worse than baseline macro-F1 |
+| `densenet_roi_loss_noborder` | ROI-loss / explanation-loss variant without border penalty | 0.6529 | 0.6764 | 0.6539 | 0.6641 | 0.6504 | Failed exploratory ROI-loss variant |

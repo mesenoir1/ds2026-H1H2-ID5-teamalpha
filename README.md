@@ -1,7 +1,11 @@
 # XAI-Guided Training for Knee Osteoarthritis Grading
 
 ## Project Title
-H1 + H2: XAI-Guided Training for Knee Osteoarthritis Grading
+XAI-Guided Training for Knee Osteoarthritis Grading
+
+RQ1: Can saliency maps identify knee X-ray cases where a CNN predicts the correct KL grade for the wrong reason?
+
+RQ2: Can these cases then be used to improve both classification performance and saliency faithfulness?
 
 ## Project Overview
 
@@ -130,8 +134,16 @@ test.csv
 ```
 
 ### 5. Train DenseNet201 with weighted cross-entropy baseline
-```bash
-python code/densenet_train_weighted_ce.py
+
+The official baseline model is **B1: DenseNet201 with weighted cross-entropy**. It was trained on the SIC HPC cluster using HTCondor and Docker. The training script is:
+
+```text
+code/densenet_train_weighted_ce.py
+```
+
+For the full cluster workflow, including Docker image, dependency installation, GPU request, and HTCondor submit-file template, see:
+```text
+Cluster configurations and workflow
 ```
 Expected outputs:
 
@@ -210,6 +222,7 @@ python code/suspicious_cases_dynamic.py \
   --num-debug-figures 25
 ```
 
+
 For train split:
 
 ```bash
@@ -221,6 +234,16 @@ python code/suspicious_cases_dynamic.py \
   --border-threshold 0.20 \
   --border-frac 0.08 \
   --num-debug-figures 25
+```
+
+Or can be produces on the cluster:
+Adjust for wich split the Grad_CAM is produced, the model, and output directory in 
+```text
+jobs/run_gradcam.sh
+```
+Submitting the job:
+```bash
+condor_submit jobs/submit_gradcam.sub
 ```
 
 Expected output:
@@ -245,19 +268,120 @@ debug_figures/
 ├── non_suspicious_correct/
 └── likely_inverted/
 ```
+### 9. Intervention training
+All intervention-model training scripts are stored in:
 
+```text
+code/models_try/
+```
+These scripts were trained on the SIC HPC cluster.
 
-## Cluster Usage
+## Cluster configurations and workflow
 
+These scripts were trained on the SIC HPC cluster using HTCondor with Docker. The standard Docker image was:
+
+```bash
+pytorch/pytorch:2.3.1-cuda12.1-cudnn8-devel
+```
+
+Most training jobs used the following resource configuration:
+
+```text
+request_GPUs   = 1
+request_CPUs   = 4
+request_memory = 16G
+```
 Experiments are designed for a Linux-based GPU cluster.
 
 GPU jobs are used for:
 
-```text
-model training
-Grad-CAM generation
+```bash
+# 1. SSH into the cluster
+ssh <username>@conduit.hpc.uni-saarland.de
+
+# 2. Go to the project directory
+cd /home/dsbwl26_team005/ds2026-H1H2-ID5-teamalpha
+
+# 3. Prepare a run script for the selected model
+# Example:
+# jobs/run_m2_noinv_blur.sh
+
+# 4. Prepare a matching HTCondor submit file
+# Example:
+# jobs/submit_m2_noinv_blur.sub
+
+# 5. Submit the job
+condor_submit jobs/submit_m2_noinv_blur.sub
+
+# 6. Monitor the job
+condor_q
+
+# 7. Inspect logs after completion
+ls -la runlogs/
+```
+A typical run script:
+```bash
+#!/bin/bash
+set -euo pipefail
+
+cd /home/dsbwl26_team005/ds2026-H1H2-ID5-teamalpha
+
+echo "=== Job started ==="
+date
+echo "PWD: $(pwd)"
+echo "Host: $(hostname)"
+
+echo "=== CUDA check ==="
+python - <<'PY'
+import torch
+print("CUDA available:", torch.cuda.is_available())
+print("CUDA device count:", torch.cuda.device_count())
+if torch.cuda.is_available():
+    print("GPU:", torch.cuda.get_device_name(0))
+PY
+
+echo "=== Install dependencies ==="
+pip install --no-cache-dir -r requirements.txt
+
+echo "=== Start training ==="
+python code/models_try/<training_script>.py \
+  --train-csv data/splits/train.csv \
+  --val-csv data/splits/val.csv \
+  --output-dir outputs/<model_name> \
+  --epochs <epochs> \
+  --batch-size 8 \
+  --lr 1e-4 \
+  --num-workers 4 \
+  --seed 42
+
+echo "=== Job finished ==="
+date
 ```
 
+A typical HTCondor submit file:
+```bash
+universe                = docker
+docker_image            = pytorch/pytorch:2.3.1-cuda12.1-cudnn8-devel
+
+executable              = jobs/run_<model_name>.sh
+
+output                  = runlogs/<model_name>.$(ClusterId).$(ProcId).out
+error                   = runlogs/<model_name>.$(ClusterId).$(ProcId).err
+log                     = runlogs/<model_name>.$(ClusterId).log
+
+should_transfer_files   = YES
+when_to_transfer_output = ON_EXIT
+
+request_GPUs            = 1
+request_CPUs            = 4
+request_memory          = 16G
+
+requirements            = UidDomain == "cs.uni-saarland.de"
++WantGPUHomeMounted     = true
++WantScratchMounted     = true
+
+queue 1
+```
 ## Reproducibility Notes
 
 - Dataset splits are saved as CSV files under `data/splits/`.

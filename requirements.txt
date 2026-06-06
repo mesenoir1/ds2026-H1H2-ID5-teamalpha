@@ -8,5 +8,5 @@ pandas
 matplotlib
 Pillow
 tqdm
-opencv-python
+opencv-python-headless
 seaborn

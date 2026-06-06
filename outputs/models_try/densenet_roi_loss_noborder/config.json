@@ -1,0 +1,16 @@
+{
+  "architecture": "DenseNet201WithFeatures",
+  "loss": "GuidedAttentionLoss",
+  "weighted_loss": true,
+  "lambda_border": 0.0,
+  "lambda_roi": 0.1,
+  "num_classes": 5,
+  "pretrained": true,
+  "epochs": 30,
+  "batch_size": 4,
+  "learning_rate": 0.0001,
+  "seed": 42,
+  "train_csv": "data/splits/train.csv",
+  "val_csv": "data/splits/val.csv",
+  "checkpoint_selection": "best validation macro-F1"
+}

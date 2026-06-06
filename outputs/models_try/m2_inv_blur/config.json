@@ -1,0 +1,23 @@
+{
+  "model_id": "M2d",
+  "architecture": "DenseNet201",
+  "loss": "WeightedCrossEntropyLoss",
+  "weighted_loss": true,
+  "num_classes": 5,
+  "pretrained": true,
+  "intervention": "dynamic ROI-guided background suppression",
+  "suppression_mode": "blur",
+  "roi_mask_source": "code/roi_dynamic.py",
+  "roi_inversion_for_mask_generation": true,
+  "model_input_inverted": false,
+  "suppression_probability_train": 0.5,
+  "blur_kernel": 21,
+  "validation_suppression": false,
+  "epochs": 30,
+  "batch_size": 8,
+  "learning_rate": 0.0001,
+  "seed": 42,
+  "train_csv": "data/splits/train.csv",
+  "val_csv": "data/splits/val.csv",
+  "checkpoint_selection": "best validation macro-F1"
+}

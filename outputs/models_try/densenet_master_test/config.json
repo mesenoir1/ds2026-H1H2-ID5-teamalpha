@@ -1,0 +1,20 @@
+{
+  "architecture": "DenseNetWithFeatures",
+  "loss": "DynamicHybridLoss",
+  "lambda_border_base": 0.0,
+  "lambda_roi_base": 0.01,
+  "max_alpha": 0.5,
+  "augmentations": {
+    "flip_prob": 0.5,
+    "invert_prob": 0.0,
+    "noise_std": 0.05
+  },
+  "intervention_blur": {
+    "suppression_probability": 0.5,
+    "blur_kernel": 21
+  },
+  "epochs": 30,
+  "batch_size": 8,
+  "learning_rate": 0.0001,
+  "resumed_from": ""
+}

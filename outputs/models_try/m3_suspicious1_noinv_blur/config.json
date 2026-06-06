@@ -1,0 +1,22 @@
+{
+  "model_id": "M3_suspicious_noinv_blur",
+  "architecture": "DenseNet201",
+  "loss": "WeightedCrossEntropyLoss",
+  "intervention": "targeted no-inversion ROI blur on B1 suspicious training cases",
+  "train_csv": "data/splits/train.csv",
+  "val_csv": "data/splits/val.csv",
+  "suspicious_csv": "outputs/xai_region_analysis_dynamic/densenet_weighted_ce/train_denseblock4_predicted/suspicious_cases.csv",
+  "suspicious_paths_loaded": 769,
+  "suspicious_train_cases_matched": 769,
+  "suspicious_suppression_probability": 1.0,
+  "blur_kernel": 21,
+  "roi_inversion_for_mask_generation": false,
+  "model_input_inverted": false,
+  "validation_suppression": false,
+  "epochs": 30,
+  "batch_size": 8,
+  "learning_rate": 0.0001,
+  "seed": 42,
+  "checkpoint_selection": "best validation macro-F1",
+  "data_leakage_rule": "Only B1 train suspicious cases used for training intervention."
+}

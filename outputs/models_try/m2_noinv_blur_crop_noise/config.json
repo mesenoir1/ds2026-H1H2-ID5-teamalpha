@@ -1,0 +1,28 @@
+{
+  "model_id": "M2_noinv_blur_crop_noise",
+  "architecture": "DenseNet201",
+  "loss": "WeightedCrossEntropyLoss",
+  "intervention": "no-inversion ROI blur suppression + mild crop + Gaussian noise",
+  "suppression_probability_train": 0.5,
+  "blur_kernel": 21,
+  "roi_inversion_for_mask_generation": false,
+  "model_input_inverted": false,
+  "crop_scale": [
+    0.9,
+    1.0
+  ],
+  "crop_ratio": [
+    0.95,
+    1.05
+  ],
+  "noise_std": 0.03,
+  "noise_prob": 0.5,
+  "validation_suppression": false,
+  "validation_crop": false,
+  "validation_noise": false,
+  "epochs": 30,
+  "batch_size": 8,
+  "learning_rate": 0.0001,
+  "seed": 42,
+  "checkpoint_selection": "best validation macro-F1"
+}

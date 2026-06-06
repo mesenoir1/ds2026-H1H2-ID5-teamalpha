@@ -1,0 +1,19 @@
+{
+  "model_id": "M2_noinv_blur_border_loss",
+  "architecture": "DenseNet201WithFeatures",
+  "loss": "weighted CE + border feature penalty",
+  "weighted_loss": true,
+  "intervention": "no-inversion ROI blur suppression plus border feature penalty",
+  "suppression_probability_train": 0.75,
+  "blur_kernel": 21,
+  "border_frac": 0.08,
+  "lambda_border": 0.05,
+  "roi_inversion_for_mask_generation": false,
+  "model_input_inverted": false,
+  "validation_suppression": false,
+  "epochs": 30,
+  "batch_size": 8,
+  "learning_rate": 0.0001,
+  "seed": 42,
+  "checkpoint_selection": "best validation macro-F1"
+}

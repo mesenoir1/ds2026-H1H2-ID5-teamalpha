@@ -1,0 +1,11 @@
+{
+  "architecture": "DenseNet201WithFeatures",
+  "loss": "GuidedAttentionLoss",
+  "resumed_from": "outputs/m2_noinv_blur/best_model.pt",
+  "lambda_border": 0.0,
+  "lambda_roi": 0.1,
+  "epochs": 15,
+  "batch_size": 8,
+  "learning_rate": 5e-05,
+  "seed": 42
+}

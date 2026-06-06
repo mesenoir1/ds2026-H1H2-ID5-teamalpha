@@ -1,0 +1,19 @@
+{
+  "architecture": "DenseNetWithFeatures",
+  "loss": "DynamicHybridLoss (Smoothing + Guided Attention)",
+  "dynamic_thresholds": "ROI < 0.40, Border > 0.20",
+  "lambda_border_base": 0.1,
+  "lambda_roi_base": 0.1,
+  "max_alpha": 0.5,
+  "augmentations": [
+    "HorizontalFlip",
+    "Inversion (p=0.5)",
+    "GaussianNoise (std=0.05)"
+  ],
+  "intervention": "dynamic ROI-guided background blur",
+  "suppression_probability": 0.5,
+  "epochs": 30,
+  "batch_size": 8,
+  "learning_rate": 0.0001,
+  "resumed_from": ""
+}

@@ -1,0 +1,22 @@
+{
+  "architecture": "DenseNet201",
+  "loss": "WeightedSoftLabelCrossEntropy",
+  "weighted_loss": true,
+  "intervention": "M2 no-inversion dynamic ROI blur + suspicious-case label smoothing + Gaussian noise",
+  "suppression_prob": 0.5,
+  "blur_kernel": 21,
+  "suspicious_label_smoothing": 0.1,
+  "noise_std": 0.02,
+  "noise_prob": 0.5,
+  "suspicious_csv": "outputs/xai_region_analysis_dynamic/densenet_weighted_ce/train_denseblock4_predicted/suspicious_cases.csv",
+  "num_suspicious_training_cases": 769,
+  "num_classes": 5,
+  "pretrained": true,
+  "epochs": 30,
+  "batch_size": 8,
+  "learning_rate": 0.0001,
+  "seed": 42,
+  "train_csv": "data/splits/train.csv",
+  "val_csv": "data/splits/val.csv",
+  "checkpoint_selection": "best validation macro-F1"
+}

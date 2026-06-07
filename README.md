@@ -45,24 +45,29 @@ Can saliency maps identify knee X-ray cases where a CNN predicts the correct KL 
 │   ├── densenet_train_weighted_ce.py
 │   ├── evaluate_models.py
 │   ├── generate_gradcam.py
-│   └── post_gradcam_region_analysis_final.py
+│   └── suspicious_cases_dynamic.py
 │
 ├── data/
+|   ├── analysis
 │   ├── kneeosteoarthritis/
 │   ├── splits/
 │   │   ├── train.csv
 │   │   ├── val.csv
 │   │   └── test.csv
-│   └── eval/
+│   └──eval/
+├── jobs/
 │
 ├── outputs/
+|   ├── data_quality/
 │   ├── densenet_ce/
 │   ├── densenet_weighted_ce/
 │   ├── gradcam/
-│   └── xai_region_analysis/
+|   ├── models_try/
+│   └── xai_region_analysis_dynamic_fixed_roi/
 │
 ├── report/
 │   └── figures/
+|       └──models_try/
 │
 ├── runlogs/
 ├── JOURNAL.md
@@ -269,6 +274,7 @@ debug_figures/
 └── likely_inverted/
 ```
 ### 9. Intervention training
+A detailed note on AI-assisted development of intervention-training scripts is documented in `JOURNAL.md`.
 All intervention-model training scripts are stored in:
 
 ```text
@@ -434,6 +440,5 @@ queue 1
 - Dataset splits are saved as CSV files under `data/splits/`.
 - Model checkpoints and training metadata are saved under `outputs/`.
 - Grad-CAM runs save `gradcam_config.json`.
-- Region-analysis runs save `post_gradcam_config.json`.
 - Suspicious-case thresholds are saved in `suspicious_summary.csv`.
 - Test-set explanations should only be used for final evaluation and should not guide training interventions.

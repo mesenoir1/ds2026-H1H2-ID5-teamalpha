@@ -381,3 +381,12 @@ After completing the RQ1 suspicious-case analysis with predicted-class Grad-CAM,
 | `m2_densenet_roi_loss_noborder_continued_noinv_blur` | Continued no-inversion blur with ROI-loss variant without border penalty | 0.6659 | 0.6976 | 0.6981 | 0.6951 | 0.6671 | Macro-F1 close to main M2, but lower accuracy |
 | `densenet_roi_loss_gaussian_noise` | ROI-loss / explanation-loss variant with Gaussian noise | 0.6828 | 0.6869 | 0.6767 | 0.6776 | 0.6673 | Worse than baseline macro-F1 |
 | `densenet_roi_loss_noborder` | ROI-loss / explanation-loss variant without border penalty | 0.6529 | 0.6764 | 0.6539 | 0.6641 | 0.6504 | Failed exploratory ROI-loss variant |
+
+### Decision: AI-assisted intervention training script development
+During the RQ2 intervention phase, we used AI assistance to explore and draft alternative DenseNet201 training scripts aimed at improving classification performance and saliency faithfulness.
+
+We used Google Gemini Pro and ChatGPT to support the development of several intervention-training variants, including ROI-guided background suppression, suspicious-case targeted retraining, focal-loss variants, label-smoothing variants, and feature-attention regularization. The AI tools were used for code drafting.
+
+All AI-assisted scripts were reviewed, adapted, and executed by the group before being included in the repository. Final methodological decisions, parameter choices, model selection, evaluation, and interpretation remained the responsibility of the group.
+
+This use of AI was documented because it influenced the implementation workflow and the set of intervention variants explored, but not the evaluation itself.

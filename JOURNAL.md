@@ -390,3 +390,135 @@ We used Google Gemini Pro and ChatGPT to support the development of several inte
 All AI-assisted scripts were reviewed, adapted, and executed by the group before being included in the repository. Final methodological decisions, parameter choices, model selection, evaluation, and interpretation remained the responsibility of the group.
 
 This use of AI was documented because it influenced the implementation workflow and the set of intervention variants explored, but not the evaluation itself.
+
+Hier ist der gewünschte Markdown-Eintrag für dein Journal, übersetzt ins Englische:
+
+---
+
+## KW 23 - June 7, 2026
+
+### Decision: Master Training Method Established and Implemented
+
+After conducting several tests with different approaches, the following strategies for controlling attention and increasing robustness have proven effective and were incorporated into our pipeline design:
+
+#### 1. Blur Outside ROI Augmentation
+
+* **Hyperparameters:** `blur-kernel`, `suppression-prob` (blur ratio)
+* **Objective:** To physically force the model to focus on the ROI by blurring irrelevant image areas.
+
+#### 2. Dynamic Label Smoothing
+
+* **Hyperparameters:** `max-alpha`
+* **Concept:** Instead of using a fixed $\alpha$ for all images, the script calculates an individual uncertainty factor (smoothing parameter) $\alpha_i$ for each image $i$, based on the proportion of attention within the knee joint space ($r_{roi}$) and at the image border ($r_{border}$).
+
+The penalty factors are calculated as follows:
+
+
+$$P_{roi} = \max\left(0, \frac{0.4 - r_{roi}}{0.4}\right)$$
+
+$$P_{border} = \max\left(0, \frac{r_{border} - 0.2}{0.8}\right)$$
+
+The final $\alpha_i$ for the image is scaled by the maximum allowed smoothing value ($\alpha_{max}$) and capped at 1.0:
+
+
+$$\alpha_i = \min(1.0, P_{roi} + P_{border}) \cdot \alpha_{max}$$
+
+The original hard one-hot target vector (where the true class $y$ has a value of 1 and all others 0) is converted into a "soft" target distribution $y^{smooth}_i$. For $K=5$ classes, the following applies to each class $c$:
+
+
+$$y^{smooth}_{i,c} = \begin{cases} 
+1.0 - \alpha_i + \frac{\alpha_i}{K} & \text{if } c = y_i \\
+\frac{\alpha_i}{K} & \text{if } c \neq y_i 
+\end{cases}$$
+
+#### 3. Attention Loss Function (Hybrid Penalty)
+
+* **Hyperparameters:** `lambda-border-base`, `lambda-roi-base`
+* **Concept:** This component explicitly forces the network, via the cost function, not to rely on the background or the borders.
+
+First, a global attention map $A$ is generated from the output feature maps of the DenseNet (before pooling) by taking the absolute average across all channels (feature dimension):
+
+
+$$A_{x,y} = \frac{1}{C} \sum_{k=1}^{C} |F_{k,x,y}|$$
+
+To make the map comparable, it is normalized so that the sum of all pixels equals 1:
+
+
+$$\bar{A}_{x,y} = \frac{A_{x,y}}{\sum_{x,y} A_{x,y}}$$
+
+Now, this normalized attention is multiplied by two binary masks: the border mask $M_{border}$ and the inverse ROI mask $M_{out\_roi}$ (which is 1 everywhere the joint is *not* located). This results in the individual penalties:
+
+
+$$\mathcal{P}_{border} = \sum_{x,y} \left( \bar{A}_{x,y} \cdot M_{border}^{(x,y)} \right)$$
+
+$$\mathcal{P}_{roi} = \sum_{x,y} \left( \bar{A}_{x,y} \cdot M_{out\_roi}^{(x,y)} \right)$$
+
+The resulting attention loss for an image is scaled using the hyperparameters $\lambda_{border}$ and $\lambda_{roi}$. *(Note: The dataset script dynamically decides whether to set $\lambda$ to 0 if the image is already well-focused).*
+
+
+$$\mathcal{L}_{att}^{(i)} = \lambda_{border}^{(i)} \cdot \mathcal{P}_{border} + \lambda_{roi}^{(i)} \cdot \mathcal{P}_{roi}$$
+
+**The Final Total Loss ($\mathcal{L}_{Total}$):**
+For a batch of size $N$, the final loss function, upon which PyTorch calculates the gradient for the optimizer, is the average of the weighted classification errors and the attention penalties:
+
+
+$$\mathcal{L}_{Total} = \frac{1}{N} \sum_{i=1}^{N} \left( \mathcal{L}_{CE}^{(i)} + \mathcal{L}_{att}^{(i)} \right)$$
+
+*Note:* Currently, the loss function is only activated if the faithfulness regarding a previously trained model was very low. We are considering separating the border and out-of-ROI penalties more strictly here as well.
+
+#### 4. Data Augmentation
+
+* **Methods:** Gaussian Noise, Border Crop, Inversion
+* Gaussian Noise and Border Crop are standard, proven augmentation methods for leveling out X-ray device artifacts. Since some images in the dataset are inverted, we have included inversion as a specific augmentation option (although previous individual results did not necessarily strongly advocate for it).
+
+---
+
+## Implementation: The Master Script (`code/densenet_train_master.py`)
+
+We have compiled a master method that can be parametrically controlled to perfectly reproduce all previous individual models. Programmatically, we have restricted ourselves to the methods mentioned above.
+
+The script also supports resuming training based on a given model (`--resume-weights`). Future experiments will now focus on targeted tweaking of the parameters of this single master model.
+
+#### Parameter Overview
+
+| Category | Parameter | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| **I/O & Paths** | `--train-csv` | String | `data/split/train.csv` | Path to the training CSV |
+|  | `--val-csv` | String | `data/split/val.csv` | Path to the validation CSV |
+|  | `--output-dir` | String | *(Required)* | Output directory for checkpoints and logs |
+|  | `--resume-weights` | String | `""` | Path to `.pt` file for transfer learning / resuming |
+| **Smoothing** | `--max-alpha` | Float | `0.5` | Maximum penalty factor for dynamic smoothing |
+| **Custom Loss** | `--lambda-border-base` | Float | `0.1` | Scaling factor for border attention |
+|  | `--lambda-roi-base` | Float | `0.1` | Scaling factor for out-of-ROI attention |
+| **Augmentation** | `--flip-prob` | Float | `0.5` | Probability of horizontal flip |
+| *(0.0 = off)* | `--invert-prob` | Float | `0.5` | Probability of color inversion |
+|  | `--noise-std` | Float | `0.05` | Standard deviation for Gaussian Noise |
+| **Blur** | `--suppression-prob` | Float | `0.5` | Probability of out-of-ROI blur |
+|  | `--blur-kernel` | Int | `31` | Kernel size for the blur filter |
+| **General** | `--epochs` | Int | `30` | Number of training epochs |
+|  | `--batch-size` | Int | `8` | Images per batch |
+|  | `--lr` | Float | `1e-4` | Learning rate for the Adam Optimizer |
+|  | `--seed` | Int | `42` | Random seed for reproducibility |
+
+---
+
+### Current Evaluation Status & Insights
+
+Currently, we have systematically evaluated the models for their performance (Macro F1, Accuracy) to avoid a performance drop due to over-regularization.
+
+Additionally, we conducted a random visual inspection of the accumulated Grad-CAM heatmaps (across 100 samples per label) to evaluate to what extent we could steer faithfulness with the respective approaches.
+
+**Key Findings:**
+
+* **Attention Loss:** The custom loss function is very effective at physically steering attention. Unfortunately, accuracy drops significantly in the process. Possible explanations: The model might need artifacts at the image edges for better prediction, or it loses too much freedom to learn relevant features due to the hard restrictions.
+* **Blur:** The *Blur Outside ROI* augmentation achieved good results regarding robustness. However, faithfulness problems still persist in the already black border areas.
+
+---
+
+### ToDo & Next Steps
+
+* [ ] **Blur Tweaking:** A higher kernel and lower blur ratio (e.g., `0.50` with `31`) showed potential in initial tests to positively influence the model $\rightarrow$ Conduct systematic testing.
+* [ ] **Hyperparameter Optimization:** Investigate general tweaking – what more can be extracted from the architecture?
+* [ ] **Trade-off Analysis:** Find the right combination of hyperparameters to exactly explore the trade-off between accuracy and faithfulness.
+* [ ] **Quantitative Faithfulness Metric:** Establish an automated metric for determining the general faithfulness of a model. So far, this has been done via visual inspection. However, the necessary metrics to quantitatively classify entire models are already available and need to be evaluated.
+* [ ] **Verification:** Reproduce individual, old baseline models for final verification of the master training script's correct implementation.

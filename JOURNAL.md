@@ -522,3 +522,45 @@ Additionally, we conducted a random visual inspection of the accumulated Grad-CA
 * [ ] **Trade-off Analysis:** Find the right combination of hyperparameters to exactly explore the trade-off between accuracy and faithfulness.
 * [ ] **Quantitative Faithfulness Metric:** Establish an automated metric for determining the general faithfulness of a model. So far, this has been done via visual inspection. However, the necessary metrics to quantitatively classify entire models are already available and need to be evaluated.
 * [ ] **Verification:** Reproduce individual, old baseline models for final verification of the master training script's correct implementation.
+
+* [ ] Hier ist der Journal-Eintrag auf Englisch, passend für euer Paper:
+
+---
+
+# Week 24 - June 8
+
+## Decision: Establishment of Quantitative Faithfulness Metrics
+
+### Background & Motivation
+
+A central component of our evaluation revolves around testing our hypothesis (H2). One of our guiding principles states:
+
+> *"H2 can be falsified in two instructive ways: the intervention improves faithfulness but hurts accuracy, or it improves accuracy but leaves faithfulness unchanged. Both outcomes are publishable if argued carefully."*
+
+To test this hypothesis (and the potential trade-off) in a structured and objective manner, a qualitative visual inspection of the heatmaps is no longer sufficient. We need **quantitative metrics** that allow us to precisely compare the *faithfulness* (the anatomical fidelity of the model's decision) across different architectures. Analogous to the standard evaluation of model accuracy, we calculate these metrics across the entire test set.
+
+### Functionality of the Base Metric (`code/evaluate_faithfulness.py`)
+
+The metric is based on the alignment of model attention and anatomical prior knowledge. Given a specific region (defined as a binary mask) and the Grad-CAM heatmap of a model, the metric calculates the **percentage of global attention that falls exactly within this mask**.
+
+*Note on variance:* Since previous analyses have shown that faithfulness differs significantly depending on the predicted class (label) (e.g., healthy vs. severe osteoarthritis), we calculate and track these metrics not only globally (overall) but also strictly **class-specifically**.
+
+### The Two Focus Metrics
+
+Based on our previous segmentation and error analyses, we have identified exactly two problem areas, which we will evaluate separately from now on:
+
+#### 1. ROI Faithfulness (In-ROI Score)
+
+* **Value Range:** 0 to 1 (corresponds to 0% to 100%)
+* **Optimization Goal:** **Higher is better** ($\uparrow$)
+* **Definition:** This score indicates the percentage of the Grad-CAM heat that lies within our algorithmically generated ROI mask (knee joint space). A high value proves that the model primarily bases its classification on clinically relevant joint features.
+
+#### 2. Border Attention
+
+* **Value Range:** 0 to 1 (corresponds to 0% to 100%)
+* **Optimization Goal:** **Lower is better** ($\downarrow$)
+* **Definition:** This score quantifies the percentage of the Grad-CAM attention focused on the outermost edges of the image. The border region is defined as the **outer 8% of the image area**. (This threshold can be justified precisely, both mathematically and anatomically, as it covers X-ray markers like "L"/"R" and collimator edges without overlapping the actual joint). A low value proves that the model successfully ignores irrelevant artifacts and borders.
+
+---
+
+*Conclusion: With these two metrics, we now have the exact quantitative tools to argue the trade-off between accuracy and faithfulness for H2 in a robust and publishable manner.*

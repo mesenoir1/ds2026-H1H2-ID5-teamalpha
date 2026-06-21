@@ -527,7 +527,7 @@ Additionally, we conducted a random visual inspection of the accumulated Grad-CA
 
 ---
 
-# Week 24 - June 8
+# KW 24 - June 8
 
 ## Decision: Establishment of Quantitative Faithfulness Metrics
 
@@ -564,3 +564,41 @@ Based on our previous segmentation and error analyses, we have identified exactl
 ---
 
 *Conclusion: With these two metrics, we now have the exact quantitative tools to argue the trade-off between accuracy and faithfulness for H2 in a robust and publishable manner.*
+
+## KW 24 - 10 June 2026
+
+### Decision: Optimizer switch to AdamW
+
+Following several training runs where the model exhibited unstable convergence behavior, we re-evaluated our optimizer choice. We decided to transition from the standard Adam optimizer to **AdamW**. 
+
+AdamW decouples weight decay from the gradient update, which leads to a much smoother and more stable learning rate curve and better generalization in deep networks like our DenseNet201. After extensive comparative evaluations, the AdamW models consistently showed smoother loss trajectories and better prevention of overfitting. We have permanently adopted AdamW as the default optimizer in our master training scripts.
+
+## KW 24 - 12 June 2026
+
+### Decision: Parameter sweep for stochastic augmentation methods
+
+To find the optimal "sweet spot" for our data augmentations, we generated and evaluated several model variations. The goal was to balance robustness without destroying diagnostically relevant features.
+
+* **Blur Outside ROI:** We found that a suppression probability of **50%** works exceptionally well, especially when combined with other interventions or loss functions. If blur is used as the *sole* augmentation method, a lower probability between **10% and 25%** yields the best trade-off.
+* **Inversion:** Since our dataset inherently contains inverted X-ray images, we tested random color inversion. We observed that applying inversion with a **50% probability** does not harm model performance; instead, it effectively levels out the inverted cases in the dataset and prevents the model from memorizing color distributions as a shortcut.
+* **Gaussian Noise:** Unfortunately, injecting Gaussian noise did not lead to stable or reproducible improvements in our metrics. We have therefore decided not to rely on it as a primary augmentation strategy.
+
+## KW 25 - 16 June 2026
+
+### Decision: Evolution of Suspiciousness-Guided Training (Hard vs. Soft Weighting)
+
+We extensively tested several methods that rely on our previously calculated suspiciousness metrics (border attention and dynamic ROI inside ratio). 
+Initially, we explored **Curriculum Learning** (training exclusively on "faithful" images in early epochs before introducing the rest) and **Thresholded Loss** (applying hard `if`-condition thresholds to trigger the attention penalties). 
+
+However, we observed that hard thresholds caused "gradient swamping"—where massive, sudden penalty gradients overpowered the subtle learning signals. Consequently, we replaced the hard thresholds with a **Continuous Soft Weighting** approach. The penalty strength is now scaled proportionally to the severity of the model's shortcut behavior. 
+
+We now distinguish between two master script variants: `hard` (threshold-based) and `soft` (continuous weighting). Initial evaluations demonstrate that combining continuous soft weighting with **Dynamic Label Smoothing** produces highly promising results: it successfully increases faithfulness (higher In-ROI score, lower Border Attention) while maintaining competitive Accuracy and Macro-F1 scores. 
+
+## KW 25 - 20 June 2026
+
+### Decision: Transition to paper writing and multi-seed validation
+
+With our methodology established and the master scripts (`hard` and `soft`) fully implemented, we have officially transitioned into the paper writing phase. We are currently structuring the methodology and results sections based on the metrics gathered from our intervention models.
+
+### Next Steps: Multi-Seed Confirmation
+To ensure the scientific validity and statistical significance of our findings, our next immediate technical step is to run the final intervention models (especially the soft-weighted baseline combined with dynamic label smoothing and blur) across **multiple random seeds**. This will confirm that our observed improvements in faithfulness and the accuracy/faithfulness trade-off are robust and not artifacts of a single favorable initialization.

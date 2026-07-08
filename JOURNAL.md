@@ -21,8 +21,8 @@ Next steps: We will use stratified splitting. Considering imbalance: metrics suc
 
 ### Decision: Local Tests, Bug-Fixes and Data Splitter
 
-We tested the current scrips locally and fixed a few minor issues. 
-We added a data splitter for training. As mentioned previously the dataset is high imbalanced, so we added stratified splitting.
+We tested the current scripts locally and fixed a few minor issues. 
+We added a data splitter for training. As mentioned previously the dataset is highly imbalanced, so we added stratified splitting.
 To keep track of the behavior we added a few print statements showing distribution after splitting.
 
 ### Decision: Checked GPU access to the cluster
@@ -135,7 +135,7 @@ Therefore we discussed (see above) several methods to improve the baseline.
    Here we decide to use Anatomical Cropping (ROI Extraction) Tiulpin et al. (2018) and Antony et al. (2017)
    This method simply crops the black background, s.t. the model is forced to look at the bones
 
-2. **Gaussian Noise Augumentation**
+2. **Gaussian Noise Augmentation**
    Instead of downsampling we chose a gaussian noise augumentation to cancel/average out unvisible device artefacts.
 Gaussian noise injection is an established adversarial augmentation technique in medical imaging that prevents convolutional neural networks from memorizing scanner-specific noise profiles as shortcuts. By artificially introducing high-frequency noise during training, the model is forced to ignore these artifacts and instead learn robust, low-frequency biological features such as joint structure and bone morphology.
 
@@ -391,8 +391,6 @@ All AI-assisted scripts were reviewed, adapted, and executed by the group before
 
 This use of AI was documented because it influenced the implementation workflow and the set of intervention variants explored, but not the evaluation itself.
 
-Hier ist der gewünschte Markdown-Eintrag für dein Journal, übersetzt ins Englische:
-
 ---
 
 ## KW 23 - June 7, 2026
@@ -523,8 +521,6 @@ Additionally, we conducted a random visual inspection of the accumulated Grad-CA
 * [ ] **Quantitative Faithfulness Metric:** Establish an automated metric for determining the general faithfulness of a model. So far, this has been done via visual inspection. However, the necessary metrics to quantitatively classify entire models are already available and need to be evaluated.
 * [ ] **Verification:** Reproduce individual, old baseline models for final verification of the master training script's correct implementation.
 
-* [ ] Hier ist der Journal-Eintrag auf Englisch, passend für euer Paper:
-
 ---
 
 # KW 24 - June 8
@@ -602,3 +598,36 @@ With our methodology established and the master scripts (`hard` and `soft`) full
 
 ### Next Steps: Multi-Seed Confirmation
 To ensure the scientific validity and statistical significance of our findings, our next immediate technical step is to run the final intervention models (especially the soft-weighted baseline combined with dynamic label smoothing and blur) across **multiple random seeds**. This will confirm that our observed improvements in faithfulness and the accuracy/faithfulness trade-off are robust and not artifacts of a single favorable initialization.
+
+## KW27 - 2 July 2026
+
+### Decision: Final multi-seed evaluation and final model selection
+
+After completing the final multi-seed evaluation, we updated the project journal to align it with the final paper results. Earlier journal entries document exploratory and single-seed experiments. In particular, the earlier expectation that continuous soft weighting combined with Dynamic Label Smoothing (DLS) would become the final model was revised after the final evaluation.
+
+All final results are reported on the held-out test split and averaged over seeds 39–45. The evaluated models use the same DenseNet201-based architecture, stratified train/validation/test split, AdamW optimizer, and best-checkpoint selection by validation macro-F1.
+
+The final selected model is the continuous Weighted XAI loss model without Dynamic Label Smoothing, using `lambda_roi = 0.9`. Although DLS produced the strongest proxy saliency metrics, it reduced predictive performance compared with the weighted XAI loss model without smoothing. Therefore, DLS is reported as an ablation rather than selected as the final method.
+
+| Model | Accuracy | Macro-F1 | ROIInside | BorderAttention |
+|---|---:|---:|---:|---:|
+| Baseline | 0.665 ± 0.013 | 0.681 ± 0.010 | 0.632 ± 0.017 | 0.177 ± 0.009 |
+| Global loss, `lambda_roi = 0.2` | 0.678 ± 0.010 | 0.670 ± 0.009 | 0.869 ± 0.008 | 0.049 ± 0.004 |
+| Weighted XAI loss, `lambda_roi = 0.9` | 0.677 ± 0.012 | 0.696 ± 0.006 | 0.905 ± 0.006 | 0.031 ± 0.003 |
+| Weighted XAI loss with DLS, `alpha_max = 0.5`, `lambda_roi = 0.9` | 0.666 ± 0.019 | 0.682 ± 0.019 | 0.922 ± 0.019 | 0.023 ± 0.007 |
+
+The final model slightly improves predictive performance over the baseline while also improving the proxy-based saliency alignment metrics. Compared with the baseline, it increases Macro-F1 from `0.681 ± 0.010` to `0.696 ± 0.006`, increases ROIInside from `0.632 ± 0.017` to `0.905 ± 0.006`, and reduces BorderAttention from `0.177 ± 0.009` to `0.031 ± 0.003`.
+
+This supports RQ2 within our operational definition: XAI-guided training can improve ROI-aligned saliency and reduce border attention while maintaining or slightly improving KL-grade classification performance. However, ROIInside and BorderAttention remain heuristic proxy metrics and should not be interpreted as clinically validated faithfulness measures.
+
+### Decision: Final RQ1 suspicious-case numbers
+
+The final suspicious-case analysis uses predicted-class Grad-CAM, the dynamic ROI mask, and border attention. A correctly classified image is considered suspicious if `ROIInside < 0.40` or `BorderAttention > 0.20`.
+
+Using this rule, 767 training images were flagged as suspicious. This corresponds to 13.3% of all training images and 17.2% of correctly classified training images. On the validation split, 141 images were flagged as suspicious, corresponding to 11.4% of all validation images and 16.6% of correctly classified validation images.
+
+Most suspicious cases were driven by high border attention rather than low ROI attention. This supports RQ1 within our operational definition: Grad-CAM with ROI and border scoring identifies a measurable subset of correct predictions where the model appears to rely on questionable spatial evidence.
+
+### Consistency note
+
+The earlier journal entries remain part of the experimental history. They should be interpreted as exploratory development notes. The final paper reports the multi-seed evaluation over seeds 39–45, and the final selected model is the Weighted XAI loss model without Dynamic Label Smoothing.

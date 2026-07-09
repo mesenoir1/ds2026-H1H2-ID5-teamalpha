@@ -36,25 +36,31 @@ Can saliency maps identify knee X-ray cases where a CNN predicts the correct KL 
 
 ```text
 .
+├── baseline_39_45/ # baseline model checkpoints for 39-45 seeds 
+|
 ├── code/
 │   ├── dataset_download.py
 │   ├── dataset.py
 │   ├── split.py
 │   ├── densenet_dataset.py
 │   ├── densenet_train_ce.py
+|   ├── densenet_train_master.py # master script for interventions
 │   ├── densenet_train_weighted_ce.py
 │   ├── evaluate_models.py
 │   ├── generate_gradcam.py
 │   └── suspicious_cases_dynamic.py
 │
 ├── data/
-|   ├── analysis
+|   ├── analysis/
 │   ├── kneeosteoarthritis/
 │   ├── splits/
 │   │   ├── train.csv
 │   │   ├── val.csv
 │   │   └── test.csv
 │   └──eval/
+|
+├── final_models_39_45/ # final XAI weighted loss model checkpoints for 39-45 seeds 
+|
 ├── jobs/
 │
 ├── outputs/
@@ -65,13 +71,17 @@ Can saliency maps identify knee X-ray cases where a CNN predicts the correct KL 
 |   ├── models_try/
 │   └── xai_region_analysis_dynamic_fixed_roi/
 │
+├── paper/
+│   └── paper.pdf
 ├── report/
 │   └── figures/
-|       └──models_try/
+|       
 │
 ├── runlogs/
 ├── JOURNAL.md
 ├── README.md
+├── app.py
+├── prototype_utils.py
 └── requirements.txt
 
 ```

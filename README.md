@@ -331,7 +331,10 @@ The final comparison table in the report and journal is based on the generated s
 
 ## Cluster configurations and workflow
 
-These scripts were trained on the SIC HPC cluster using HTCondor with Docker. The standard Docker image was:
+The final XAI-guided models were trained on the SIC HPC cluster using HTCondor
+with Docker. The cluster run script calls the unified master training script
+instead of separate intervention-specific scripts. The standard Docker image
+was:
 
 ```bash
 pytorch/pytorch:2.3.1-cuda12.1-cudnn8-devel
@@ -344,45 +347,55 @@ request_GPUs   = 1
 request_CPUs   = 4
 request_memory = 16G
 ```
-Experiments are designed for a Linux-based GPU cluster.
+Experiments are designed for a Linux-based GPU cluster. The example below shows
+how to train the final selected model configuration:
 
-GPU jobs are used for:
-
-```bash
-# 1. SSH into the cluster
-ssh <username>@conduit.hpc.uni-saarland.de
-
-# 2. Go to the project directory
-cd /home/dsbwl26_team005/ds2026-H1H2-ID5-teamalpha
-
-# 3. Prepare a run script for the selected model
-# Example:
-# jobs/run_m2_noinv_blur.sh
-
-# 4. Prepare a matching HTCondor submit file
-# Example:
-# jobs/submit_m2_noinv_blur.sub
-
-# 5. Submit the job
-condor_submit jobs/submit_m2_noinv_blur.sub
-
-# 6. Monitor the job
-condor_q
-
-# 7. Inspect logs after completion
-ls -la runlogs/
+```text
+Weighted XAI loss
+lambda_roi = 0.9
+alpha_max = 0.0
+without Dynamic Label Smoothing
+seeds 39-45
 ```
-A typical run script:
+
+### Example run script
+
+Create a file such as:
+
+```text
+jobs/run_final_weighted_xai.sh
+```
+
+with the following content:
+
 ```bash
 #!/bin/bash
 set -euo pipefail
 
+SEED="${1:-39}"
+SUBMISSION_ID="${2:-local}"
+MODEL_NAME="weighted_xai_roi09_a0_seed${SEED}_${SUBMISSION_ID}"
+OUTPUT_DIR="outputs/${MODEL_NAME}"
+
+TRAIN_CSV="outputs/xai_region_analysis_dynamic_fixed_roi/densenet_weighted_ce/train_denseblock4_predicted/all_cases_dynamic_roi_scores.csv"
+VAL_CSV="outputs/xai_region_analysis_dynamic_fixed_roi/densenet_weighted_ce/val_denseblock4_predicted/all_cases_dynamic_roi_scores.csv"
+
 cd /home/dsbwl26_team005/ds2026-H1H2-ID5-teamalpha
 
-echo "=== Job started ==="
+echo "=== Job started: ${MODEL_NAME} ==="
 date
 echo "PWD: $(pwd)"
 echo "Host: $(hostname)"
+
+export PYTHONNOUSERSITE=1
+VENV_DIR="${_CONDOR_SCRATCH_DIR:-/tmp}/venv_${MODEL_NAME}"
+export PYTHONUSERBASE="${_CONDOR_SCRATCH_DIR:-/tmp}/python_user_${MODEL_NAME}"
+export PIP_CACHE_DIR="${_CONDOR_SCRATCH_DIR:-/tmp}/pip_cache_${MODEL_NAME}"
+
+echo "=== Create clean Python environment ==="
+python -m venv --system-site-packages "${VENV_DIR}"
+source "${VENV_DIR}/bin/activate"
+python -m pip install --upgrade pip
 
 echo "=== CUDA check ==="
 python - <<'PY'
@@ -394,33 +407,61 @@ if torch.cuda.is_available():
 PY
 
 echo "=== Install dependencies ==="
-pip install --no-cache-dir -r requirements.txt
+python -m pip install --no-cache-dir -r requirements.txt
+python -m pip install --no-cache-dir --ignore-installed opencv-python-headless
 
-echo "=== Start training ==="
-python code/models_try/<training_script>.py \
-  --train-csv data/splits/train.csv \
-  --val-csv data/splits/val.csv \
-  --output-dir outputs/<model_name> \
-  --epochs <epochs> \
+echo "=== Start final XAI-guided master-script training ==="
+python code/densenet_train_master.py \
+  --train-csv "${TRAIN_CSV}" \
+  --val-csv "${VAL_CSV}" \
+  --output-dir "${OUTPUT_DIR}" \
+  --attention-mode weighted \
+  --max-alpha 0.0 \
+  --lambda-border-base 0.0 \
+  --lambda-roi-base 0.9 \
+  --roi-loss-threshold 0.40 \
+  --border-loss-threshold 0.20 \
+  --flip-prob 0.5 \
+  --invert-prob 0.5 \
+  --noise-std 0.0 \
+  --suppression-prob 0.5 \
+  --blur-kernel 31 \
+  --epochs 30 \
   --batch-size 8 \
   --lr 1e-4 \
   --num-workers 4 \
-  --seed 42
+  --seed "${SEED}"
 
 echo "=== Job finished ==="
 date
 ```
 
-A typical HTCondor submit file:
+This writes the checkpoint and metadata to:
+
+```text
+outputs/weighted_xai_roi09_a0_seed<seed>_<cluster-id>/
+```
+
+### Example HTCondor submit file
+
+Create a file such as:
+
+```text
+jobs/submit_final_weighted_xai_seeds.sub
+```
+
+with the following content:
+
 ```bash
 universe                = docker
 docker_image            = pytorch/pytorch:2.3.1-cuda12.1-cudnn8-devel
 
-executable              = jobs/run_<model_name>.sh
+executable              = jobs/run_final_weighted_xai.sh
+arguments               = $(SEED) $(ClusterId)
 
-output                  = runlogs/<model_name>.$(ClusterId).$(ProcId).out
-error                   = runlogs/<model_name>.$(ClusterId).$(ProcId).err
-log                     = runlogs/<model_name>.$(ClusterId).log
+output                  = runlogs/final_weighted_xai_seed$(SEED).$(ClusterId).$(ProcId).out
+error                   = runlogs/final_weighted_xai_seed$(SEED).$(ClusterId).$(ProcId).err
+log                     = runlogs/final_weighted_xai_seeds.$(ClusterId).log
 
 should_transfer_files   = YES
 when_to_transfer_output = ON_EXIT
@@ -433,7 +474,32 @@ requirements            = UidDomain == "cs.uni-saarland.de"
 +WantGPUHomeMounted     = true
 +WantScratchMounted     = true
 
-queue 1
+queue SEED from (
+39
+40
+41
+42
+43
+44
+45
+)
+```
+
+### Submit and monitor
+
+```bash
+# 1. SSH into the cluster
+
+# 2. Go to the project directory
+
+# 3. Submit the final multi-seed training job
+condor_submit jobs/submit_final_weighted_xai_seeds.sub
+
+# 4. Monitor the job
+condor_q
+
+# 5. Inspect logs after completion
+ls -la runlogs/
 ```
 ## Reproducibility Notes
 
@@ -442,3 +508,75 @@ queue 1
 - Grad-CAM runs save `gradcam_config.json`.
 - Suspicious-case thresholds are saved in `suspicious_summary.csv`.
 - Test-set explanations should only be used for final evaluation and should not guide training interventions.
+
+## Prototype Requirements
+
+The repository includes a local Streamlit prototype for interactive inspection of
+the baseline and final XAI-guided knee OA models.
+
+### Required Prototype Files
+
+The prototype-specific files that must be included are:
+
+```text
+app.py
+prototype_utils.py
+requirements.txt
+```
+
+The prototype reuses the existing implementation in `code/`. The following
+modules are required for preprocessing, model construction, Grad-CAM, dynamic
+ROI masks, and proxy saliency metrics:
+
+```text
+code/densenet_dataset.py
+code/evaluate_faithfulness.py
+code/generate_gradcam.py
+code/roi_dynamic.py
+code/suspicious_cases_dynamic.py
+```
+
+### Required Model Folders
+
+The prototype expects the model checkpoints in these folders:
+
+```text
+baseline_39_45/
+final_models_39_45/
+```
+
+Each seed/model folder should contain:
+
+```text
+best_model.pt
+config.json
+training_history.csv
+```
+
+The app automatically discovers checkpoints matching:
+
+```text
+baseline_39_45/**/best_model.pt
+final_models_39_45/**/best_model.pt
+```
+
+Because `best_model.pt` files are large, they should be tracked with Git LFS.
+The repository should therefore also include:
+
+```text
+.gitattributes
+```
+
+### Running the Prototype
+
+Install dependencies:
+
+```powershell
+pip install -r requirements.txt
+```
+
+Run the Streamlit app from the project root:
+
+```powershell
+streamlit run app.py
+```

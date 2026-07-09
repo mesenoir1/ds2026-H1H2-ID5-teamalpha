@@ -631,3 +631,27 @@ Most suspicious cases were driven by high border attention rather than low ROI a
 ### Consistency note
 
 The earlier journal entries remain part of the experimental history. They should be interpreted as exploratory development notes. The final paper reports the multi-seed evaluation over seeds 39–45, and the final selected model is the Weighted XAI loss model without Dynamic Label Smoothing.
+
+## KW28 - 9 July 2026
+
+### Decision: Local Streamlit prototype for model comparison and XAI inspection
+
+After finalizing the multi-seed evaluation and selecting the final XAI-guided model, we implemented a local Streamlit prototype to make the project results easier to inspect interactively. The prototype is intended as a research and demonstration dashboard, not as a medical diagnostic tool.
+
+The dashboard allows a user to upload a knee X-ray image and compare the baseline DenseNet201 weighted cross-entropy models against the final XAI-guided DenseNet201 models. It supports both single-seed inference and ensemble inference. In single-seed mode, one baseline checkpoint and one final-model checkpoint are loaded for the selected seed. In ensemble mode, predicted class probabilities are averaged across all available seeds, while Grad-CAM is still shown for the selected seed because explanations are model-specific.
+
+The displayed outputs include:
+
+- baseline and final predicted KL grade with confidence,
+- individual seed predictions in ensemble mode,
+- original uploaded X-ray,
+- dynamic ROI mask,
+- baseline and final predicted-class Grad-CAM overlays,
+- ROIInside and BorderAttention for both models,
+- suspicious/not-suspicious flags using the paper thresholds.
+
+
+The prototype-specific files are:
+
+- `app.py`
+- `prototype_utils.py`

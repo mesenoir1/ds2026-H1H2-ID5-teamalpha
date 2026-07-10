@@ -21,7 +21,9 @@ try:
         PredictionResult,
         choose_device,
         discover_checkpoints,
+        explain_heatmap,
         explain_model,
+        generate_predicted_class_gradcam,
         load_checkpoint_model,
         make_masks,
         mask_overlay,
@@ -96,6 +98,33 @@ def predict_ensemble_cached(
     )
 
 
+def explain_ensemble_cached(
+    checkpoints: dict[int, CheckpointInfo],
+    model_family: str,
+    target_class: int,
+    image_tensor: torch.Tensor,
+    image_np: np.ndarray,
+    roi_mask: np.ndarray,
+    border_mask: np.ndarray,
+    device_name: str,
+):
+    heatmaps = []
+    for _, checkpoint in sorted(checkpoints.items()):
+        model = cached_load_model(str(checkpoint.path), model_family, device_name)
+        heatmap, _, _ = generate_predicted_class_gradcam(
+            model,
+            image_tensor,
+            target_class=target_class,
+        )
+        heatmaps.append(heatmap)
+
+    if not heatmaps:
+        raise ValueError(f"No checkpoints available for {model_family} ensemble Grad-CAM.")
+
+    mean_heatmap = np.mean(np.stack(heatmaps, axis=0), axis=0)
+    return explain_heatmap(mean_heatmap, image_np, roi_mask, border_mask)
+
+
 def prediction_card(title: str, prediction, explanation) -> None:
     status = "Suspicious" if explanation.suspicious else "Not suspicious"
     status_method = st.error if explanation.suspicious else st.success
@@ -156,21 +185,27 @@ with st.sidebar:
         st.error("No baseline best_model.pt checkpoints were found.")
     if not final_checkpoints:
         st.error("No final-model best_model.pt checkpoints were found.")
-    if baseline_checkpoints and final_checkpoints and not common_seeds:
+    if prediction_mode == "single seed" and baseline_checkpoints and final_checkpoints and not common_seeds:
         st.error("Baseline and final folders have no matching seeds.")
 
-    seed_options = common_seeds or sorted(set(baseline_checkpoints) | set(final_checkpoints))
-    if seed_options:
-        default_seed = seed_options.index(39) if 39 in seed_options else 0
-        selected_seed = st.selectbox(
-            "Seed for single-seed prediction and Grad-CAM",
-            options=seed_options,
-            index=default_seed,
-            format_func=format_seed_option,
-        )
+    if prediction_mode == "single seed":
+        seed_options = common_seeds
+        if seed_options:
+            default_seed = seed_options.index(39) if 39 in seed_options else 0
+            selected_seed = st.selectbox(
+                "Seed for single-seed prediction",
+                options=seed_options,
+                index=default_seed,
+                format_func=format_seed_option,
+            )
+        else:
+            selected_seed = None
+            st.info("No seed selector is available until matching checkpoints are found.")
     else:
+        seed_options = []
         selected_seed = None
-        st.info("No seed selector is available until checkpoints are found.")
+        st.caption("Ensemble mode uses all discovered seeds; no seed selection is needed.")
+        st.caption("Ensemble Grad-CAM is averaged across all discovered seeds.")
 
     with st.expander("Discovered baseline checkpoints"):
         st.dataframe(checkpoint_summary(baseline_checkpoints), hide_index=True, use_container_width=True)
@@ -186,7 +221,9 @@ if uploaded_file is None:
     st.write("Upload an image to run the comparison.")
     st.stop()
 
-if not seed_options:
+if prediction_mode == "single seed" and selected_seed is None:
+    st.stop()
+if prediction_mode == "ensemble" and (not baseline_checkpoints or not final_checkpoints):
     st.stop()
 
 try:
@@ -212,13 +249,9 @@ else:
     baseline_prediction_checkpoints = baseline_checkpoints
     final_prediction_checkpoints = final_checkpoints
     st.caption(
-        "Prediction is ensembled across available seeds. Grad-CAM and ROI metrics are displayed "
-        "for the selected seed because explanations are seed-specific."
+        "Prediction is ensembled across available seeds. Grad-CAM overlays and ROI metrics are "
+        "computed from Grad-CAM heatmaps averaged across seeds for the ensemble-predicted class."
     )
-
-if selected_seed not in baseline_checkpoints or selected_seed not in final_checkpoints:
-    st.error(f"Selected Grad-CAM seed {selected_seed} is not available for both model families.")
-    st.stop()
 
 try:
     with st.spinner("Loading models and running predictions..."):
@@ -248,32 +281,44 @@ try:
                 image_tensor=image_tensor,
                 device_name=device_name,
             )
-            baseline_model = cached_load_model(
-                str(baseline_checkpoints[selected_seed].path),
-                "baseline",
-                device_name,
-            )
-            final_model = cached_load_model(
-                str(final_checkpoints[selected_seed].path),
-                "final",
-                device_name,
-            )
 
     with st.spinner("Generating predicted-class Grad-CAM and saliency alignment metrics..."):
-        baseline_explanation = explain_model(
-            baseline_model,
-            image_tensor,
-            image_np,
-            roi_mask,
-            border_mask,
-        )
-        final_explanation = explain_model(
-            final_model,
-            image_tensor,
-            image_np,
-            roi_mask,
-            border_mask,
-        )
+        if prediction_mode == "single seed":
+            baseline_explanation = explain_model(
+                baseline_model,
+                image_tensor,
+                image_np,
+                roi_mask,
+                border_mask,
+            )
+            final_explanation = explain_model(
+                final_model,
+                image_tensor,
+                image_np,
+                roi_mask,
+                border_mask,
+            )
+        else:
+            baseline_explanation = explain_ensemble_cached(
+                baseline_prediction_checkpoints,
+                model_family="baseline",
+                target_class=baseline_prediction.pred_class,
+                image_tensor=image_tensor,
+                image_np=image_np,
+                roi_mask=roi_mask,
+                border_mask=border_mask,
+                device_name=device_name,
+            )
+            final_explanation = explain_ensemble_cached(
+                final_prediction_checkpoints,
+                model_family="final",
+                target_class=final_prediction.pred_class,
+                image_tensor=image_tensor,
+                image_np=image_np,
+                roi_mask=roi_mask,
+                border_mask=border_mask,
+                device_name=device_name,
+            )
 except Exception as exc:
     st.error(f"Model inference or explanation failed: {exc}")
     st.stop()
@@ -319,13 +364,18 @@ viz_cols[1].image(roi_overlay, caption="Dynamic ROI mask", clamp=True)
 viz_cols[2].image(border_overlay, caption="Border mask", clamp=True)
 
 overlay_cols = st.columns(2)
+gradcam_caption_suffix = (
+    f"seed {selected_seed}"
+    if prediction_mode == "single seed"
+    else "averaged across seeds"
+)
 overlay_cols[0].image(
     baseline_explanation.overlay,
-    caption=f"Baseline predicted-class Grad-CAM, seed {selected_seed}",
+    caption=f"Baseline predicted-class Grad-CAM, {gradcam_caption_suffix}",
     clamp=True,
 )
 overlay_cols[1].image(
     final_explanation.overlay,
-    caption=f"Final predicted-class Grad-CAM, seed {selected_seed}",
+    caption=f"Final predicted-class Grad-CAM, {gradcam_caption_suffix}",
     clamp=True,
 )

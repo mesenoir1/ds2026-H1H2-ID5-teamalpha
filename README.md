@@ -45,7 +45,8 @@ Can saliency maps identify knee X-ray cases where a CNN predicts the correct KL 
 │   ├── densenet_dataset.py
 │   ├── densenet_train_ce.py
 |   ├── densenet_train_master.py # master script for interventions
-│   ├── densenet_train_weighted_ce.py
+|   ├── densenet_train_master_soft.py # training script for final XAI weighted loss model
+│   ├── densenet_train_weighted_ce.py # training script for baseline model
 │   ├── evaluate_models.py
 │   ├── generate_gradcam.py
 │   └── suspicious_cases_dynamic.py

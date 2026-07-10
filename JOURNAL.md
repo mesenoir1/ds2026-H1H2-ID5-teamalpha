@@ -638,7 +638,7 @@ The earlier journal entries remain part of the experimental history. They should
 
 After finalizing the multi-seed evaluation and selecting the final XAI-guided model, we implemented a local Streamlit prototype to make the project results easier to inspect interactively. The prototype is intended as a research and demonstration dashboard, not as a medical diagnostic tool.
 
-The dashboard allows a user to upload a knee X-ray image and compare the baseline DenseNet201 weighted cross-entropy models against the final XAI-guided DenseNet201 models. It supports both single-seed inference and ensemble inference. In single-seed mode, one baseline checkpoint and one final-model checkpoint are loaded for the selected seed. In ensemble mode, predicted class probabilities are averaged across all available seeds, while Grad-CAM is still shown for the selected seed because explanations are model-specific.
+The dashboard allows a user to upload a knee X-ray image and compare the baseline DenseNet201 weighted cross-entropy models against the final XAI-guided DenseNet201 models. It supports both single-seed inference and ensemble inference. In single-seed mode, one baseline checkpoint and one final-model checkpoint are loaded for the selected seed. In ensemble mode, predicted class probabilities and Grad-CAMs are averaged across all available seeds.
 
 The displayed outputs include:
 

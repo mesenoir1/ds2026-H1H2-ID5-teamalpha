@@ -339,10 +339,28 @@ def explain_model(
     image_np: np.ndarray,
     roi: np.ndarray,
     border: np.ndarray,
+    target_class: int | None = None,
 ) -> ExplanationResult:
-    heatmap, _, _ = generate_predicted_class_gradcam(model, image_tensor, target_class=None)
+    heatmap, _, _ = generate_predicted_class_gradcam(model, image_tensor, target_class=target_class)
+    return explain_heatmap(heatmap, image_np, roi, border)
+
+
+def explain_heatmap(
+    heatmap: np.ndarray,
+    image_np: np.ndarray,
+    roi: np.ndarray,
+    border: np.ndarray,
+) -> ExplanationResult:
     if heatmap.shape != image_np.shape:
         heatmap = cv2.resize(heatmap, (image_np.shape[1], image_np.shape[0]))
+
+    heatmap = np.maximum(heatmap.astype(np.float32), 0)
+    heatmap_min = float(heatmap.min())
+    heatmap_max = float(heatmap.max())
+    if heatmap_max - heatmap_min > 1e-8:
+        heatmap = (heatmap - heatmap_min) / (heatmap_max - heatmap_min)
+    else:
+        heatmap = np.zeros_like(heatmap, dtype=np.float32)
 
     roi_inside, border_attention = compute_alignment_metrics(heatmap, roi, border)
     suspicious, reason = suspicious_reason(roi_inside, border_attention)
